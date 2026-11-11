@@ -87,13 +87,27 @@ function pickVoice(pref){if(S.set.voice){const v=voices.find(v=>v.name===S.set.v
 /* Speech: keep a reference to the utterance (Chrome drops unreferenced ones), resume a stuck engine
    (Safari can come back from the file picker or background in a paused state), and only cancel when
    something is actually playing, because cancel() straight before speak() can swallow the new one. */
+/* iPhone silent switch: speech normally follows the ringer switch. Telling Safari this page is "playback"
+   audio (Audio Session API, iOS 16.4+) and keeping a silent looping clip going (older iOS) makes it ignore the switch.
+   Must start from a tap, so it is armed on the first touch. */
+let audioUnlocked=false,keepAlive=null;
+function unlockAudio(){if(audioUnlocked)return;audioUnlocked=true;
+  try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+  try{const n=8000,b=new Uint8Array(44+n),d=new DataView(b.buffer),w=(o,t)=>[...t].forEach((c,i)=>b[o+i]=c.charCodeAt(0));
+    w(0,"RIFF");d.setUint32(4,36+n,true);w(8,"WAVEfmt ");d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);
+    d.setUint32(24,8000,true);d.setUint32(28,8000,true);d.setUint16(32,1,true);d.setUint16(34,8,true);w(36,"data");d.setUint32(40,n,true);
+    b.fill(128,44);
+    keepAlive=new Audio(URL.createObjectURL(new Blob([b],{type:"audio/wav"})));keepAlive.loop=true;keepAlive.volume=0.01;
+    keepAlive.setAttribute("playsinline","");keepAlive.play().catch(()=>{audioUnlocked=false})}catch(e){audioUnlocked=false}}
+["touchend","click","keydown"].forEach(ev=>document.addEventListener(ev,unlockAudio,{passive:true}));
+document.addEventListener("visibilitychange",()=>{if(!keepAlive)return;if(document.hidden)keepAlive.pause();else keepAlive.play().catch(()=>{})});
 let lastUtter=null,speechWarned=false;
-function say(text,tag){if(!("speechSynthesis" in window)){toast("Speech isn't available in this browser.");return}
+function say(text,tag){unlockAudio();if(!("speechSynthesis" in window)){toast("Speech isn't available in this browser.");return}
   try{const ss=speechSynthesis;if(!voices.length)loadVoices();
     const u=new SpeechSynthesisUtterance(String(text).replace(/\s*\/\s*/g,", ").replace(/…/g,""));const v=pickVoice(tag);
     if(v){u.voice=v;u.lang=v.lang}else u.lang="es-ES";u.rate=S.set.rate;
     u.onerror=e=>{const er=e&&e.error;if(er==="interrupted"||er==="canceled")return;
-      if(!speechWarned){speechWarned=true;toast("Couldn't play the audio"+(er?` (${er})`:"")+". Check that your phone isn't on silent, and try another voice in Setup.")}};
+      if(!speechWarned){speechWarned=true;toast("Couldn't play the audio"+(er?` (${er})`:"")+". Try another voice in Setup.")}};
     lastUtter=u;
     if(ss.speaking||ss.pending){ss.cancel();setTimeout(()=>{try{ss.resume();ss.speak(u)}catch(e){}},80)}
     else{ss.resume();ss.speak(u)}}catch(e){toast("Couldn't play audio.")}}
