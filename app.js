@@ -21,7 +21,12 @@ const S={tab:"today",cards:store.get("cards",{}),log:store.get("log",{}),
   set:Object.assign({newPer:8,size:20,dir:"es",rate:.9,voice:""},store.get("settings",{})),
   words:null,wordsSource:"",
   ui:Object.assign({wBand:"1-250",wPos:"all",wq:"",pCat:"basics",aSub:"slang",sCat:"people",pq:""},store.get("ui",{}))};
-const saveCards=()=>store.set("cards",S.cards);
+const ukey=k=>(S.user?"u:"+S.user.uid+":":"")+k;
+const saveCards=()=>store.set(ukey("cards"),S.cards);
+const saveLog=()=>store.set(ukey("log"),S.log);
+const DEVICE=(()=>{let d=store.get("device","");if(!d){d="d"+Math.random().toString(36).slice(2,10);store.set("device",d)}return d})();
+S.peers={};const savePeers=()=>store.set(ukey("peers"),S.peers);
+const dayCount=k=>(S.log[k]||0)+Object.values(S.peers).reduce((a,l)=>a+((l&&l[k])||0),0);
 const saveUI=()=>store.set("ui",S.ui);
 const saveSet=()=>store.set("settings",S.set);
 
@@ -57,14 +62,14 @@ function grade(card,g){// g: 0 again, 1 hard, 2 good, 3 easy
   else if(g===1){st.i=Math.max(1,Math.round((st.i||1)*1.2));st.e=Math.max(1.3,st.e-.15);st.d=t+st.i}
   else if(g===2){st.i=st.r===0||st.i===0?1:st.i===1?3:Math.round(st.i*st.e);st.d=t+st.i}
   else{st.i=st.i===0?3:Math.round(st.i*st.e*1.3);st.e+=.15;st.d=t+st.i}
-  st.r++;S.cards[card.id]=st;saveCards();
-  const k=isoDay(t);S.log[k]=(S.log[k]||0)+1;store.set("log",S.log)}
+  st.r++;st.t=Date.now();S.cards[card.id]=st;saveCards();
+  const k=isoDay(t);S.log[k]=(S.log[k]||0)+1;saveLog();SYNC.queue()}
 const isDue=c=>{const st=S.cards[c.id];return st&&st.d<=today()};
 const isNew=c=>!S.cards[c.id];
 const isKnown=c=>{const st=S.cards[c.id];return st&&st.i>=3};
 function buildSession(cards,{onlyDue=false}={}){const due=shuffle(cards.filter(isDue));const fresh=onlyDue?[]:cards.filter(isNew).slice(0,S.set.newPer);
   return [...due.slice(0,Math.max(0,S.set.size-fresh.length)),...fresh].slice(0,S.set.size)}
-function streak(){let n=0,t=today();if(!S.log[isoDay(t)])t--;while(S.log[isoDay(t)]){n++;t--}return n}
+function streak(){let n=0,t=today();if(!dayCount(isoDay(t)))t--;while(dayCount(isoDay(t))){n++;t--}return n}
 
 /* ---------- speech ---------- */
 let voices=[];
@@ -84,10 +89,75 @@ async function loadWords(){const local=store.get("words",null);if(local&&local.l
   try{const r=await fetch("words.json",{cache:"no-cache"});if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length>100){S.words=d;S.wordsSource="bundled"}}}catch(e){}
   render()}
 function importWords(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!Array.isArray(d)||!Array.isArray(d[0]))throw 0;
-    S.words=d;S.wordsSource="imported";if(!store.set("words",d))toast("Loaded for this visit, but the browser wouldn't store it.");else toast(`Imported ${d.length} words`);render()}
+    S.words=d;S.wordsSource="imported";if(!store.set("words",d))toast("Loaded for this visit, but the browser wouldn't store it.");else toast(`Imported ${d.length} words`);
+    if(S.user&&SYNC.backend)SYNC.backend.saveWords(S.user.uid,JSON.stringify(d)).then(()=>toast("Word list saved to your account for your other devices")).catch(()=>{});render()}
   catch(e){toast("That file isn't a Talk to Juan word list.")}};fr.readAsText(file)}
 
+/* ---------- accounts & sync ---------- */
+/* Each card state carries t (last answered, ms). Merging keeps the newer state per card, so two devices
+   that studied different cards offline both keep their work. */
+function mergeCards(into,from){let changed=false;for(const[id,st]of Object.entries(from||{})){const cur=into[id];
+  if(!cur||(st.t||0)>(cur.t||0)){into[id]=st;changed=true}}return changed}
+function mergeLog(into,from){let changed=false;for(const[d,n]of Object.entries(from||{}))if(n>(into[d]||0)){into[d]=n;changed=true}return changed}
+function localIsNewer(remote){const rc=(remote&&remote.cards)||{},rl=(remote&&remote.logs&&remote.logs[DEVICE])||{};
+  for(const[id,st]of Object.entries(S.cards))if(!rc[id]||(st.t||0)>(rc[id].t||0))return true;
+  for(const[d,n]of Object.entries(S.log))if(n>(rl[d]||0))return true;return false}
+const SYNC_TEXT={off:"",loading:"Connecting…",signedout:"Not signed in",syncing:"Syncing…",saving:"Saving…",pending:"Saved on this device, syncs when online",synced:"Synced",offline:"Offline: syncs when you're back online",error:"Sync problem"};
+const SYNC={backend:null,status:"off",err:"",unsub:null,timer:null,dirty:false,
+  async init(){const cfg=window.TTJ_FIREBASE_CONFIG;const mk=window.TTJ_FAKE_BACKEND||(cfg&&window.TTJ_makeBackend?()=>window.TTJ_makeBackend(cfg):null);
+    if(!mk)return;this.status="loading";this.badge();
+    try{this.backend=await mk()}catch(e){this.status="error";this.err="Couldn't reach the sign-in service. Check your connection and reload.";this.badge();render();return}
+    this.status="signedout";this.backend.onAuth(u=>this.setUser(u));render()},
+  setUser(u){if(this.unsub){try{this.unsub()}catch(e){}this.unsub=null}clearTimeout(this.timer);
+    if(u){S.user=u;const gc=store.get("cards",{}),gl=store.get("log",{});
+      S.cards=store.get(ukey("cards"),{});S.log=store.get(ukey("log"),{});S.peers=store.get(ukey("peers"),{});
+      if(Object.keys(gc).length||Object.keys(gl).length){mergeCards(S.cards,gc);for(const[d,n]of Object.entries(gl))S.log[d]=(S.log[d]||0)+n;store.set("cards",{});store.set("log",{});saveCards();saveLog();this.dirty=true}
+      this.status="syncing";
+      this.unsub=this.backend.watch(u.uid,(data,meta={})=>{let ch=false;
+        if(data){ch=mergeCards(S.cards,data.cards);const logs=data.logs||{};if(logs[DEVICE]&&mergeLog(S.log,logs[DEVICE]))ch=true;
+          const peers={};for(const[d,l]of Object.entries(logs))if(d!==DEVICE)peers[d]=l;if(JSON.stringify(peers)!==JSON.stringify(S.peers)){S.peers=peers;savePeers();ch=true}}
+        if(ch){saveCards();saveLog();if(!SES)render()}
+        if(this.dirty||localIsNewer(data))this.queue(400);
+        else if(this.status!=="saving")this.status=meta.pending?"pending":meta.fromCache&&navigator.onLine===false?"offline":"synced";
+        this.badge()},e=>{this.status="error";this.err=(e&&e.message)||"";this.badge()});
+      if(!S.words)this.backend.loadWords(u.uid).then(j=>{if(j&&!S.words){S.words=JSON.parse(j);S.wordsSource="your account";store.set("words",S.words);render()}}).catch(()=>{});
+    }else{S.user=null;S.cards=store.get("cards",{});S.log=store.get("log",{});S.peers={};this.status="signedout";this.dirty=false}
+    render()},
+  queue(delay=2500){if(!S.user||!this.backend)return;this.dirty=true;this.status="saving";this.badge();clearTimeout(this.timer);this.timer=setTimeout(()=>this.push(),delay)},
+  async push(){const u=S.user;if(!u)return;const snap={cards:S.cards,logs:Object.assign({},S.peers,{[DEVICE]:S.log}),name:u.name||"",v:2};this.dirty=false;
+    const p=this.backend.save(u.uid,snap);
+    const slow=setTimeout(()=>{if(this.status==="saving"){this.status="pending";this.badge()}},4000);
+    try{await p;if(S.user===u&&!this.dirty){this.status="synced";this.badge()}}catch(e){this.dirty=true;this.status="error";this.err=(e&&e.message)||"";this.badge()}finally{clearTimeout(slow)}},
+  badge(){for(const b of document.querySelectorAll("[data-sync]")){b.textContent=SYNC_TEXT[this.status]||"";b.dataset.state=this.status}}};
+window.addEventListener("online",()=>{if(S.user&&SYNC.dirty)SYNC.queue(200)});
+
 /* ---------- views ---------- */
+let AUTH={mode:"signin",busy:false,msg:"",err:"",name:"",email:""};
+function accountPanel(){const p=el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Account & sync"}));
+  if(!SYNC.backend){p.append(el("p",{class:"muted",style:"margin:0",text:SYNC.status==="loading"?"Connecting…":SYNC.status==="error"?SYNC.err:
+    "Accounts aren't switched on for this site yet, so progress stays on this device. (Site owner: add a Firebase config, see the README.)"}));return p}
+  if(S.user){p.append(el("div",{class:"row",style:"justify-content:space-between"},el("div",{},el("div",{style:"font-weight:600",text:S.user.name||S.user.email}),
+      el("div",{class:"muted small",text:S.user.email})),el("span",{class:"syncpill","data-sync":"","data-state":SYNC.status,text:SYNC_TEXT[SYNC.status]})),
+      el("p",{class:"muted small",style:"margin:0",text:"Your answers sync to every phone or laptop where you sign in with this account. Each traveller should have their own account."}),
+      SYNC.status==="error"&&SYNC.err?el("p",{class:"small",style:"margin:0;color:var(--bad)",text:SYNC.err}):null,
+      el("div",{class:"row"},S.words&&S.wordsSource!=="your account"?el("button",{class:"btn sm",type:"button",onclick:()=>SYNC.backend.saveWords(S.user.uid,JSON.stringify(S.words)).then(()=>toast("Word list saved to your account")).catch(()=>toast("Couldn't save the word list."))},"Save word list to my account"):null,
+        el("button",{class:"btn sm",type:"button",onclick:async()=>{if(SYNC.dirty)await SYNC.push();await SYNC.backend.signOut();toast("Signed out")}},"Sign out")));return p}
+  const up=AUTH.mode==="signup";
+  const name=el("input",{type:"text",autocomplete:"nickname","aria-label":"Your name",placeholder:"Your name",value:AUTH.name,oninput:e=>{AUTH.name=e.target.value}});
+  const email=el("input",{type:"text",inputmode:"email",autocomplete:"email",autocapitalize:"off",spellcheck:"false","aria-label":"Email",placeholder:"Email",value:AUTH.email,oninput:e=>{AUTH.email=e.target.value}});
+  const pw=el("input",{type:"password",autocomplete:up?"new-password":"current-password","aria-label":"Password",placeholder:up?"Password (6+ characters)":"Password"});
+  const go=async e=>{e.preventDefault();if(AUTH.busy)return;AUTH.busy=true;AUTH.err="";AUTH.msg="";btn.disabled=true;btn.textContent="One moment…";
+    try{if(up)await SYNC.backend.signUp(name.value.trim(),email.value.trim(),pw.value);else await SYNC.backend.signIn(email.value.trim(),pw.value);AUTH.busy=false;toast(up?"Account created. ¡Bienvenido!":"Signed in")}
+    catch(err){AUTH.busy=false;AUTH.err=SYNC.backend.errorText(err);render()}};
+  const btn=el("button",{class:"btn primary",type:"submit"},up?"Create account":"Sign in");
+  p.append(el("p",{class:"muted small",style:"margin:0",text:"Sign in to keep your progress on all your devices. Progress you made here before signing in is added to your account."}),
+    el("div",{class:"subnav",role:"group",style:"margin:0"},el("button",{type:"button","aria-pressed":String(!up),onclick:()=>{AUTH.mode="signin";AUTH.err="";render()}},"Sign in"),
+      el("button",{type:"button","aria-pressed":String(up),onclick:()=>{AUTH.mode="signup";AUTH.err="";render()}},"Create account")),
+    el("form",{class:"stack",onsubmit:go},up?name:null,email,pw,AUTH.err?el("p",{class:"small",role:"alert",style:"margin:0;color:var(--bad)",text:AUTH.err}):null,
+      AUTH.msg?el("p",{class:"small",role:"status",style:"margin:0;color:var(--ok)",text:AUTH.msg}):null,
+      el("div",{class:"row"},btn,!up?el("button",{class:"btn sm ghost",type:"button",onclick:async()=>{if(!email.value.trim()){AUTH.err="Type your email first, then tap Forgot password.";render();return}
+        try{await SYNC.backend.resetPassword(email.value.trim());AUTH.msg="Check your email for a link to set a new password.";AUTH.err=""}catch(err){AUTH.err=SYNC.backend.errorText(err)}render()}},"Forgot password?"):null)));
+  return p}
 const TABS=[["today","Today",'<path d="M4 12h3l3-8 4 16 3-8h3"/>'],["words","Words",'<path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h12"/>'],
   ["phrases","Phrases",'<path d="M4 5h16v11H9l-5 4z"/>'],["argentina","Argentina",'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'],
   ["more","Setup",'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']];
@@ -101,9 +171,10 @@ function practiseRow(getCards,label){const go=mode=>()=>startSession(getCards(),
 function viewToday(){const v=el("div",{class:"stack"});const t=today();
   const all=Object.entries(DECKS).map(([k,d])=>[k,d,d.all()]);
   const dueAll=all.flatMap(x=>x[2].filter(isDue));
-  const done=S.log[isoDay(t)]||0;
+  const done=dayCount(isoDay(t));
   v.append(el("div",{class:"panel stack"},
-    el("div",{class:"eyebrow",text:new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}),
+    el("div",{class:"row",style:"justify-content:space-between"},el("div",{class:"eyebrow",text:new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}),
+      SYNC.backend?el("a",{href:"#more",class:"acct"},S.user?el("b",{text:S.user.name||S.user.email.split("@")[0]}):el("b",{text:"Sign in to sync"}),S.user?el("span",{"data-sync":"","data-state":SYNC.status,text:SYNC_TEXT[SYNC.status]}):null):null),
     el("h2",{text:dueAll.length?`${dueAll.length} card${dueAll.length>1?"s":""} to review`:done?"All caught up. ¡Bien!":"¡Hola! Ready for a few minutes?"}),
     el("div",{class:"stats"},el("div",{class:"stat"},el("b",{text:String(streak())}),el("span",{class:"muted small",text:"day streak"})),
       el("div",{class:"stat"},el("b",{text:String(done)}),el("span",{class:"muted small",text:"answers today"}))),
@@ -202,7 +273,7 @@ function viewArgentina(){const v=el("div",{class:"stack"});
     const list=el("div",{class:"list"});for(const c of neighbourCards())list.append(phraseItem(c));v.append(list)}
   return v}
 
-function viewMore(){const v=el("div",{class:"stack"});v.append(el("h2",{text:"Setup"}));
+function viewMore(){const v=el("div",{class:"stack"});v.append(el("h2",{text:"Setup"}),accountPanel());
   const vs=el("select",{"aria-label":"Voice",onchange:e=>{S.set.voice=e.target.value;saveSet()}},el("option",{value:"",text:"Automatic (prefers Argentine)"}),
     ...voices.map(x=>el("option",{value:x.name,selected:S.set.voice===x.name,text:`${x.name} (${x.lang})`})));
   const rate=el("input",{type:"range",min:"0.6",max:"1.2",step:"0.05",value:String(S.set.rate),"aria-label":"Speech speed",oninput:e=>{S.set.rate=+e.target.value;saveSet()}});
@@ -218,12 +289,12 @@ function viewMore(){const v=el("div",{class:"stack"});v.append(el("h2",{text:"Se
     el("label",{class:"btn sm",style:"justify-self:start"},S.words?"Replace words.json":"Import words.json",el("input",{type:"file",accept:".json,application/json",hidden:true,onchange:e=>e.target.files[0]&&importWords(e.target.files[0])}))));
   const ta=el("textarea",{"aria-label":"Progress code",placeholder:"Paste a progress code here to load it"});
   v.append(el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Move your progress"}),
-    el("p",{class:"muted",style:"margin:0",text:"Progress is saved in this browser only. To move it to another phone or laptop, copy the code here and paste it there."}),
+    el("p",{class:"muted",style:"margin:0",text:S.user?"Not needed while you're signed in, but handy as a backup.":"Without an account, progress is saved in this browser only. To move it, copy the code here and paste it on the other device."}),
     el("div",{class:"row"},el("button",{class:"btn sm",type:"button",onclick:async()=>{const code=JSON.stringify({v:1,cards:S.cards,log:S.log});ta.value=code;
       try{await navigator.clipboard.writeText(code);toast("Progress code copied")}catch(e){ta.select();toast("Select the code and copy it")}}},"Copy progress code"),
-      el("button",{class:"btn sm",type:"button",onclick:()=>{try{const d=JSON.parse(ta.value);if(!d.cards)throw 0;Object.assign(S.cards,d.cards);Object.assign(S.log,d.log||{});saveCards();store.set("log",S.log);toast("Progress loaded");render()}catch(e){toast("That code didn't work.")}}},"Load pasted code")),ta));
+      el("button",{class:"btn sm",type:"button",onclick:()=>{try{const d=JSON.parse(ta.value);if(!d.cards)throw 0;mergeCards(S.cards,d.cards);mergeLog(S.log,d.log||{});saveCards();saveLog();SYNC.queue(500);toast("Progress loaded");render()}catch(e){toast("That code didn't work.")}}},"Load pasted code")),ta));
   let armed=false;const reset=el("button",{class:"btn sm",type:"button",onclick:()=>{if(!armed){armed=true;reset.textContent="Tap again to erase all progress";return}
-    S.cards={};S.log={};saveCards();store.set("log",S.log);toast("Progress reset");render()}},"Reset progress");
+    S.cards={};S.log={};saveCards();saveLog();if(S.user&&SYNC.backend)SYNC.backend.save(S.user.uid,{cards:{},logs:{},name:S.user.name||"",v:2}).catch(()=>{});toast("Progress reset");render()}},"Reset progress");
   v.append(el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"About"}),
     el("p",{style:"margin:0",class:"small"},"Word ranks, glosses and example sentences come from Mark Davies' ",el("i",{text:"A Frequency Dictionary of Spanish"})," (your own copy). Slang topics follow ",el("a",{href:"https://francospanishschool.com/vocabulary/argentine-slang",target:"_blank",rel:"noopener"},"Franco Spanish School's Argentine slang list"),". Phrases and examples were written for this trip."),
     el("p",{class:"muted small",style:"margin:0",text:"Works offline once it's been opened (add it to your home screen)."}),reset));
@@ -310,7 +381,7 @@ document.addEventListener("keydown",e=>{if(!SES||e.target.tagName==="INPUT")retu
   if(e.key==="Escape")endSession()});
 
 /* ---------- start ---------- */
-route();loadWords();
+route();loadWords();SYNC.init();
 if("serviceWorker" in navigator&&location.protocol==="https:"&&window.top===window&&!/claude\.ai|claudeusercontent/.test(location.host)){
   window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{})})}
 })();

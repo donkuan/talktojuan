@@ -139,6 +139,11 @@ tr:last-child td{border-bottom:0}
 td.arcol{font-weight:600;color:var(--ar)}
 .callout{background:var(--sun-soft);border-radius:12px;padding:12px 14px;font-size:14px}
 .empty{text-align:center;padding:30px 10px;color:var(--muted)}
+.acct{display:flex;gap:8px;align-items:baseline;font-size:12.5px;text-decoration:none;color:var(--muted)}
+.acct b{color:var(--ink);font-weight:600}
+.syncpill{font-size:12px;border-radius:999px;padding:3px 9px;background:var(--surface2);color:var(--muted)}
+[data-sync][data-state="synced"]{color:var(--ok)}
+[data-sync][data-state="error"]{color:var(--bad)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:60;max-width:90vw}
 details summary{cursor:pointer;font-weight:600}
 .subnav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:12px;overflow-x:auto}
@@ -161,6 +166,8 @@ details summary{cursor:pointer;font-weight:600}
 <nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
 <div id="study" class="study" hidden></div>
 <script src="content.js"></script>
+<script src="firebase-config.js"></script>
+<script src="backend-firebase.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

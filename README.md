@@ -7,7 +7,19 @@ A small Spanish coach for a trip through Argentina, Chile, Bolivia and Peru. Pla
 - **Common words**: the 5,000 most frequent Spanish words, from *A Frequency Dictionary of Spanish* (Mark Davies). That list is copyrighted, so `words.json` is **not** in this repo: import your private copy in the app (Words → Import words.json). It's stored in your browser.
 - **Practice**: flashcards with spaced repetition, multiple choice, typing, listening (device text-to-speech, prefers an es-AR voice).
 
-Progress is kept in the browser (localStorage); use Setup → "Copy progress code" to move it between devices.
+Progress is kept in the browser, and with an account it syncs across devices (see below). Without an account, Setup → "Copy progress code" moves it by hand.
+
+## Accounts and sync (Firebase, free)
+Each person creates an account (email + password) in Setup; their answers sync to every device where they sign in, also after studying offline. Sync uses Firebase (Spark plan: free, no card). One-time setup:
+
+1. [console.firebase.google.com](https://console.firebase.google.com) → **Add project** → name it `talktojuan` (Google Analytics: off).
+2. **Build → Authentication → Get started → Sign-in method → Email/Password → Enable**.
+3. **Authentication → Settings → Authorized domains → Add domain** → `donkuan.github.io`.
+4. **Build → Firestore Database → Create database** → location `eur3 (europe-west)` → start in **production mode**.
+5. **Firestore → Rules** → paste the contents of [`firestore.rules`](firestore.rules) → **Publish**.
+6. **Project settings (gear) → Your apps → Web `</>`** → nickname "Talk to Juan" (no Firebase Hosting) → copy the `firebaseConfig` values into [`firebase-config.js`](firebase-config.js) and push.
+
+The config values are public by design; the Firestore rules make sure every user can only read and write their own data.
 
 Slang topics follow [Franco Spanish School's Argentine slang list](https://francospanishschool.com/vocabulary/argentine-slang); meanings are paraphrased and the examples were written for this app.
 
