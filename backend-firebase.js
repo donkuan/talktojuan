@@ -11,6 +11,7 @@ window.TTJ_makeBackend = async function(cfg){
   catch (e) { db = F.getFirestore(app); }
   const progressDoc = uid => F.doc(db, "users", uid);
   const wordsDoc = uid => F.doc(db, "users", uid, "private", "words");
+  const sharedWordsDoc = () => F.doc(db, "shared", "words");
   const toUser = u => u ? {uid: u.uid, email: u.email || "", name: u.displayName || ""} : null;
   return {
     kind: "firebase",
@@ -25,6 +26,9 @@ window.TTJ_makeBackend = async function(cfg){
     save(uid, data){ return F.setDoc(progressDoc(uid), Object.assign({}, data, {updatedAt: F.serverTimestamp()})); },
     async saveWords(uid, json){ return F.setDoc(wordsDoc(uid), {json, savedAt: F.serverTimestamp()}); },
     async loadWords(uid){ const s = await F.getDoc(wordsDoc(uid)); return s.exists() ? s.data().json : null; },
+    /* Shared copy for the travel group: readable only by the accounts listed in firestore.rules. */
+    async saveShared(json){ return F.setDoc(sharedWordsDoc(), {json, savedAt: F.serverTimestamp()}); },
+    async loadShared(){ const s = await F.getDoc(sharedWordsDoc()); return s.exists() ? s.data().json : null; },
     errorText(e){ const c = (e && e.code) || "";
       return ({"auth/invalid-email":"That email address doesn't look right.","auth/missing-password":"Enter a password.",
         "auth/weak-password":"Use a password of at least 6 characters.","auth/email-already-in-use":"There's already an account with that email. Sign in instead.",

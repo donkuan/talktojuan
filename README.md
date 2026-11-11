@@ -4,7 +4,7 @@ A small Spanish coach for a trip through Argentina, Chile, Bolivia and Peru. Pla
 
 - **Travel phrases**: buses, hostels and refugios, food (incl. gluten-free / no cow's milk), money, hiking, races, cycling, altitude, borders.
 - **Argentine Spanish**: slang (tagged Argentine / Argentine + elsewhere / general Spanish, with rude words flagged), voseo drill, the "sh" sound, Argentine vs. general vocabulary, plus Chilean, Peruvian and Bolivian slang.
-- **Common words**: the 5,000 most frequent Spanish words, from *A Frequency Dictionary of Spanish* (Mark Davies). That list is copyrighted, so `words.json` is **not** in this repo: import your private copy in the app (Words → Import words.json). It's stored in your browser.
+- **Common words**: the 5,000 most frequent Spanish words, from *A Frequency Dictionary of Spanish* (Mark Davies). That list is copyrighted, so `words.json` is **not** in this repo. Import your private copy once while signed in (Words → Import words.json): it's stored in Firestore, readable only by the accounts listed in the rules, and loads automatically on every device they sign in on.
 - **Practice**: flashcards with spaced repetition, multiple choice, typing, listening (device text-to-speech, prefers an es-AR voice).
 
 Progress is kept in the browser, and with an account it syncs across devices (see below). Without an account, Setup → "Copy progress code" moves it by hand.
@@ -16,7 +16,7 @@ Each person creates an account (email + password) in Setup; their answers sync t
 2. **Build → Authentication → Get started → Sign-in method → Email/Password → Enable**.
 3. **Authentication → Settings → Authorized domains → Add domain** → `donkuan.github.io`.
 4. **Build → Firestore Database → Create database** → location `eur3 (europe-west)` → start in **production mode**.
-5. **Firestore → Rules** → paste the contents of [`firestore.rules`](firestore.rules) → **Publish**.
+5. **Firestore → Rules** → paste the contents of [`firestore.rules`](firestore.rules), put your travellers' sign-up emails in the `shared` rule (lower case; keep them out of this public repo) → **Publish**.
 6. **Project settings (gear) → Your apps → Web `</>`** → nickname "Talk to Juan" (no Firebase Hosting) → copy the `firebaseConfig` values into [`firebase-config.js`](firebase-config.js) and push.
 
 The config values are public by design; the Firestore rules make sure every user can only read and write their own data.

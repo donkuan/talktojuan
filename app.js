@@ -90,7 +90,7 @@ async function loadWords(){const local=store.get("words",null);if(local&&local.l
   render()}
 function importWords(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!Array.isArray(d)||!Array.isArray(d[0]))throw 0;
     S.words=d;S.wordsSource="imported";if(!store.set("words",d))toast("Loaded for this visit, but the browser wouldn't store it.");else toast(`Imported ${d.length} words`);
-    if(S.user&&SYNC.backend)SYNC.backend.saveWords(S.user.uid,JSON.stringify(d)).then(()=>toast("Word list saved to your account for your other devices")).catch(()=>{});render()}
+    if(S.user&&SYNC.backend)SYNC.shareWords(JSON.stringify(d)).then(()=>toast("Word list saved to your account")).catch(()=>{});render()}
   catch(e){toast("That file isn't a Talk to Juan word list.")}};fr.readAsText(file)}
 
 /* ---------- accounts & sync ---------- */
@@ -120,9 +120,15 @@ const SYNC={backend:null,status:"off",err:"",unsub:null,timer:null,dirty:false,
         if(this.dirty||localIsNewer(data))this.queue(400);
         else if(this.status!=="saving")this.status=meta.pending?"pending":meta.fromCache&&navigator.onLine===false?"offline":"synced";
         this.badge()},e=>{this.status="error";this.err=(e&&e.message)||"";this.badge()});
-      if(!S.words)this.backend.loadWords(u.uid).then(j=>{if(j&&!S.words){S.words=JSON.parse(j);S.wordsSource="your account";store.set("words",S.words);render()}}).catch(()=>{});
+      if(!S.words)this.fetchWords(u);
     }else{S.user=null;S.cards=store.get("cards",{});S.log=store.get("log",{});S.peers={};this.status="signedout";this.dirty=false}
     render()},
+  async fetchWords(u){const b=this.backend;let j=null;
+    try{j=await b.loadWords(u.uid)}catch(e){}
+    if(!j&&b.loadShared){try{j=await b.loadShared()}catch(e){}}
+    if(j&&!S.words&&S.user===u){S.words=JSON.parse(j);S.wordsSource="your account";store.set("words",S.words);render();toast(`Word list loaded: ${S.words.length.toLocaleString("en")} words`)}},
+  shareWords(json){const b=this.backend,u=S.user;if(!b||!u)return Promise.reject();
+    return Promise.all([b.saveWords(u.uid,json),b.saveShared?b.saveShared(json).catch(()=>null):null])},
   queue(delay=2500){if(!S.user||!this.backend)return;this.dirty=true;this.status="saving";this.badge();clearTimeout(this.timer);this.timer=setTimeout(()=>this.push(),delay)},
   async push(){const u=S.user;if(!u)return;const snap={cards:S.cards,logs:Object.assign({},S.peers,{[DEVICE]:S.log}),name:u.name||"",v:2};this.dirty=false;
     const p=this.backend.save(u.uid,snap);
@@ -140,7 +146,7 @@ function accountPanel(){const p=el("div",{class:"panel stack"},el("h3",{style:"m
       el("div",{class:"muted small",text:S.user.email})),el("span",{class:"syncpill","data-sync":"","data-state":SYNC.status,text:SYNC_TEXT[SYNC.status]})),
       el("p",{class:"muted small",style:"margin:0",text:"Your answers sync to every phone or laptop where you sign in with this account. Each traveller should have their own account."}),
       SYNC.status==="error"&&SYNC.err?el("p",{class:"small",style:"margin:0;color:var(--bad)",text:SYNC.err}):null,
-      el("div",{class:"row"},S.words&&S.wordsSource!=="your account"?el("button",{class:"btn sm",type:"button",onclick:()=>SYNC.backend.saveWords(S.user.uid,JSON.stringify(S.words)).then(()=>toast("Word list saved to your account")).catch(()=>toast("Couldn't save the word list."))},"Save word list to my account"):null,
+      el("div",{class:"row"},S.words&&S.wordsSource!=="your account"?el("button",{class:"btn sm",type:"button",onclick:()=>SYNC.shareWords(JSON.stringify(S.words)).then(()=>{S.wordsSource="your account";toast("Word list saved to your account");render()}).catch(()=>toast("Couldn't save the word list."))},"Save word list to my account"):null,
         el("button",{class:"btn sm",type:"button",onclick:async()=>{if(SYNC.dirty)await SYNC.push();await SYNC.backend.signOut();toast("Signed out")}},"Sign out"))].filter(Boolean));return p}
   const up=AUTH.mode==="signup";
   const name=el("input",{type:"text",autocomplete:"nickname","aria-label":"Your name",placeholder:"Your name",value:AUTH.name,oninput:e=>{AUTH.name=e.target.value}});
@@ -194,7 +200,7 @@ function viewToday(){const v=el("div",{class:"stack"});const t=today();
 function viewWords(){const v=el("div",{class:"stack"});
   v.append(el("div",{},el("h2",{text:"Common words"}),el("p",{class:"muted",style:"margin:0",text:"The 5,000 most frequent Spanish words, ranked. The first 1,000 cover most of what you'll hear and read."})));
   if(!S.words){v.append(el("div",{class:"panel stack"},el("b",{text:"The word list isn't loaded yet."}),
-    el("p",{class:"muted",style:"margin:0",text:"The word list comes from your own copy of A Frequency Dictionary of Spanish, so it isn't part of the public site. Import the words.json file you were sent:"}),
+    el("p",{class:"muted",style:"margin:0",text:S.user?"Your account doesn't have the word list yet. It comes from your own copy of A Frequency Dictionary of Spanish, so it isn't part of the public site. Import words.json once and it's loaded automatically on every device you sign in on.":"Sign in (Setup) to get the word list automatically, or import the words.json file here. It comes from your own copy of A Frequency Dictionary of Spanish, so it isn't part of the public site."}),
     el("label",{class:"btn primary",style:"justify-self:start"},"Import words.json",el("input",{type:"file",accept:".json,application/json",hidden:true,onchange:e=>e.target.files[0]&&importWords(e.target.files[0])}))));return v}
   const bands=el("div",{class:"chips",role:"group","aria-label":"Frequency band"});
   for(const[b,l]of BANDS)bands.append(el("button",{class:"chip",type:"button","aria-pressed":String(S.ui.wBand===b),onclick:()=>{S.ui.wBand=b;saveUI();render()}},l));
