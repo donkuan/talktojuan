@@ -136,12 +136,12 @@ let AUTH={mode:"signin",busy:false,msg:"",err:"",name:"",email:""};
 function accountPanel(){const p=el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Account & sync"}));
   if(!SYNC.backend){p.append(el("p",{class:"muted",style:"margin:0",text:SYNC.status==="loading"?"Connecting…":SYNC.status==="error"?SYNC.err:
     "Accounts aren't switched on for this site yet, so progress stays on this device. (Site owner: add a Firebase config, see the README.)"}));return p}
-  if(S.user){p.append(el("div",{class:"row",style:"justify-content:space-between"},el("div",{},el("div",{style:"font-weight:600",text:S.user.name||S.user.email}),
+  if(S.user){p.append(...[el("div",{class:"row",style:"justify-content:space-between"},el("div",{},el("div",{style:"font-weight:600",text:S.user.name||S.user.email}),
       el("div",{class:"muted small",text:S.user.email})),el("span",{class:"syncpill","data-sync":"","data-state":SYNC.status,text:SYNC_TEXT[SYNC.status]})),
       el("p",{class:"muted small",style:"margin:0",text:"Your answers sync to every phone or laptop where you sign in with this account. Each traveller should have their own account."}),
       SYNC.status==="error"&&SYNC.err?el("p",{class:"small",style:"margin:0;color:var(--bad)",text:SYNC.err}):null,
       el("div",{class:"row"},S.words&&S.wordsSource!=="your account"?el("button",{class:"btn sm",type:"button",onclick:()=>SYNC.backend.saveWords(S.user.uid,JSON.stringify(S.words)).then(()=>toast("Word list saved to your account")).catch(()=>toast("Couldn't save the word list."))},"Save word list to my account"):null,
-        el("button",{class:"btn sm",type:"button",onclick:async()=>{if(SYNC.dirty)await SYNC.push();await SYNC.backend.signOut();toast("Signed out")}},"Sign out")));return p}
+        el("button",{class:"btn sm",type:"button",onclick:async()=>{if(SYNC.dirty)await SYNC.push();await SYNC.backend.signOut();toast("Signed out")}},"Sign out"))].filter(Boolean));return p}
   const up=AUTH.mode==="signup";
   const name=el("input",{type:"text",autocomplete:"nickname","aria-label":"Your name",placeholder:"Your name",value:AUTH.name,oninput:e=>{AUTH.name=e.target.value}});
   const email=el("input",{type:"text",inputmode:"email",autocomplete:"email",autocapitalize:"off",spellcheck:"false","aria-label":"Email",placeholder:"Email",value:AUTH.email,oninput:e=>{AUTH.email=e.target.value}});
