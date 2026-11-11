@@ -40,7 +40,7 @@ function slangCards(catId){const out=[];for(const c of SLANG_CATS){if(catId&&cat
 const voseoCards=()=>VOSEO.map(([tu,vos,en])=>({id:"v:"+hash(vos),deck:"voseo",es:vos,en:en+"  ·  tú form: "+tu,tag:"ar",tu}));
 const regionalCards=()=>REGIONAL.map(([ar,gen,cl,pe,en])=>({id:"r:"+hash(ar),deck:"regional",es:ar,en:en,tag:"ar",note:`General: ${gen} · Chile: ${cl} · Peru: ${pe}`}));
 const neighbourCards=()=>NEIGHBOURS.map(([es,en,tag,ex,exEn])=>({id:"n:"+hash(es),deck:"neighbours",es,en,tag,ex,exEn}));
-const COMMON_BANDS=[["1-100","1–100"],["101-250","101–250"],["251-500","251–500"],["501-750","501–750"],["751-1100","751–1,098"]];
+const COMMON_BANDS=[["1-100","1–100"],["101-250","101–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-2000","1,001–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"]];
 const BANDS=[["1-250","1–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-1500","1,001–1,500"],["1501-2000","1,501–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"]];
 const POSN={det:"determiner",v:"verb",nm:"noun (m)",nf:"noun (f)",nc:"noun (m/f)","nm/f":"noun (m/f)",nmf:"noun (m/f)",n:"noun",adj:"adjective",adv:"adverb",prep:"preposition",conj:"conjunction",pron:"pronoun",art:"article",num:"number",interj:"interjection"};
 const posGroup=p=>p==="v"?"verbs":p.startsWith("n")&&p!=="num"?"nouns":p==="adj"?"adjectives":"other";
@@ -52,7 +52,7 @@ function wordCards(band,pos,src){src=src||curSrc();const list=src==="dict"?S.wor
 const curSrc=()=>S.ui.wSrc==="dict"&&S.words?"dict":"common";
 const bandsFor=src=>src==="dict"?BANDS:COMMON_BANDS;
 const DECKS={
-  common:{name:"Everyday words",sub:"The 1,100 most used words",all:()=>wordCards("1-5000","all","common")},
+  common:{name:"Everyday words",sub:"The 5,000 most used words",all:()=>wordCards("1-5000","all","common")},
   words:{name:"Dictionary 5,000",sub:"From your frequency dictionary",all:()=>wordCards("1-5000","all","dict")},
   phrases:{name:"Travel phrases",sub:"For buses, hostels, trails and food",all:()=>phraseCards()},
   slang:{name:"Argentine slang",sub:"Lunfardo and everyday Argentine",all:()=>slangCards()},
@@ -84,9 +84,20 @@ if("speechSynthesis" in window){loadVoices();try{speechSynthesis.onvoiceschanged
 function pickVoice(pref){if(S.set.voice){const v=voices.find(v=>v.name===S.set.voice);if(v)return v}
   const order=pref==="ar"?["es-AR","es-UY","es-419","es-US","es-MX","es-ES"]:["es-AR","es-419","es-US","es-MX","es-CL","es-ES"];
   for(const l of order){const v=voices.find(v=>v.lang.replace("_","-").toLowerCase()===l.toLowerCase());if(v)return v}return voices[0]||null}
+/* Speech: keep a reference to the utterance (Chrome drops unreferenced ones), resume a stuck engine
+   (Safari can come back from the file picker or background in a paused state), and only cancel when
+   something is actually playing, because cancel() straight before speak() can swallow the new one. */
+let lastUtter=null,speechWarned=false;
 function say(text,tag){if(!("speechSynthesis" in window)){toast("Speech isn't available in this browser.");return}
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).replace(/\s*\/\s*/g,", ").replace(/…/g,""));const v=pickVoice(tag);
-    if(v){u.voice=v;u.lang=v.lang}else u.lang="es-AR";u.rate=S.set.rate;speechSynthesis.speak(u)}catch(e){toast("Couldn't play audio.")}}
+  try{const ss=speechSynthesis;if(!voices.length)loadVoices();
+    const u=new SpeechSynthesisUtterance(String(text).replace(/\s*\/\s*/g,", ").replace(/…/g,""));const v=pickVoice(tag);
+    if(v){u.voice=v;u.lang=v.lang}else u.lang="es-ES";u.rate=S.set.rate;
+    u.onerror=e=>{const er=e&&e.error;if(er==="interrupted"||er==="canceled")return;
+      if(!speechWarned){speechWarned=true;toast("Couldn't play the audio"+(er?` (${er})`:"")+". Check that your phone isn't on silent, and try another voice in Setup.")}};
+    lastUtter=u;
+    if(ss.speaking||ss.pending){ss.cancel();setTimeout(()=>{try{ss.resume();ss.speak(u)}catch(e){}},80)}
+    else{ss.resume();ss.speak(u)}}catch(e){toast("Couldn't play audio.")}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&"speechSynthesis" in window){try{speechSynthesis.cancel();loadVoices()}catch(e){}}});
 const ICON={speak:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>'};
 const sayBtn=(text,tag,lg)=>el("button",{class:"say"+(lg===true?" lg":lg==="xs"?" xs":""),type:"button","aria-label":"Say “"+text+"”",html:ICON.speak,onclick:e=>{e.stopPropagation();say(text,tag)}});
 
@@ -192,7 +203,7 @@ function viewToday(){const v=el("div",{class:"stack"});const t=today();
     el("div",{class:"stats"},el("div",{class:"stat"},el("b",{text:String(streak())}),el("span",{class:"muted small",text:"day streak"})),
       el("div",{class:"stat"},el("b",{text:String(done)}),el("span",{class:"muted small",text:"answers today"}))),
     el("div",{class:"row"},el("button",{class:"btn primary",type:"button",disabled:!dueAll.length,onclick:()=>startSession(shuffle(dueAll).slice(0,S.set.size),"flash","Mixed review")},"Review due cards"),
-      el("button",{class:"btn",type:"button",onclick:()=>{const fresh=[...phraseCards().filter(isNew).slice(0,4),...wordCards("1-1100","all",S.words?"dict":"common").filter(isNew).slice(0,4),...slangCards().filter(isNew).slice(0,2)];
+      el("button",{class:"btn",type:"button",onclick:()=>{const fresh=[...phraseCards().filter(isNew).slice(0,4),...wordCards("1-1500","all",S.words?"dict":"common").filter(isNew).slice(0,4),...slangCards().filter(isNew).slice(0,2)];
         startSession(shuffle(fresh),"flash","Something new")}},"Learn something new"))));
   const p=el("div",{class:"panel"},el("h3",{style:"margin-top:0",text:"Your decks"}));
   for(const[k,d,cards]of all){if(k==="words"&&!S.words&&!S.user)continue;const known=cards.filter(isKnown).length,seen=cards.filter(c=>!isNew(c)).length,due=cards.filter(isDue).length;
@@ -205,9 +216,9 @@ function viewToday(){const v=el("div",{class:"stack"});const t=today();
   return v}
 
 function viewWords(){const v=el("div",{class:"stack"});const src=curSrc();
-  v.append(el("div",{},el("h2",{text:"Common words"}),el("p",{class:"muted",style:"margin:0",text:src==="dict"?"The 5,000 most frequent Spanish words from your frequency dictionary.":"The 1,100 words you'll meet most often, ranked by how often they're used in everyday Spanish, with travel examples."})));
+  v.append(el("div",{},el("h2",{text:"Common words"}),el("p",{class:"muted",style:"margin:0",text:src==="dict"?"The 5,000 most frequent Spanish words from your frequency dictionary.":"The 5,000 words you'll meet most often, ranked by how often they're used in everyday Spanish. The first 1,100 come with a travel example sentence."})));
   if(S.words){const sw=el("div",{class:"subnav",role:"group","aria-label":"Word list"});
-    for(const[k,l]of[["common","Everyday 1,100"],["dict","Dictionary 5,000"]])sw.append(el("button",{type:"button","aria-pressed":String(src===k),onclick:()=>{S.ui.wSrc=k;S.ui.wBand=bandsFor(k)[0][0];saveUI();render()}},l));v.append(sw)}
+    for(const[k,l]of[["common","Everyday 5,000"],["dict","Dictionary 5,000"]])sw.append(el("button",{type:"button","aria-pressed":String(src===k),onclick:()=>{S.ui.wSrc=k;S.ui.wBand=bandsFor(k)[0][0];saveUI();render()}},l));v.append(sw)}
   if(!bandsFor(src).some(([b])=>b===S.ui.wBand)){S.ui.wBand=bandsFor(src)[0][0]}
   const bands=el("div",{class:"chips",role:"group","aria-label":"Frequency band"});
   for(const[b,l]of bandsFor(src))bands.append(el("button",{class:"chip",type:"button","aria-pressed":String(S.ui.wBand===b),onclick:()=>{S.ui.wBand=b;saveUI();render()}},l));
