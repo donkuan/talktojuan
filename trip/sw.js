@@ -1,5 +1,5 @@
 /* Offline cache for the trip planner. Bump VERSION when files change. */
-const VERSION="trip-v1";
+const VERSION="trip-v2";
 const SHELL=["./","index.html","app.js","data.js","backend.js","../firebase-config.js","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png"];
 const EXTRA=["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js","https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"];
