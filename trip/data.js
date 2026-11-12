@@ -1,0 +1,157 @@
+/* Trip data: route, ideas, packing list, plan-ahead items, festivities, climate and map. No personal data here (the repo is public). */
+const START="2026-11-20",END="2027-01-10";
+const STOPS=[
+ {id:"ba",name:"Buenos Aires",cc:"AR",from:"2026-11-20",to:"2026-11-22",short:"BA",
+  days:{"2026-11-20":"Land, Palermo. Shake-out run in the Bosques de Palermo. Parrilla dinner.","2026-11-21":"Run in Reserva Ecológica Costanera Sur. San Telmo and La Boca, long asado lunch. Get pesos sorted.","2026-11-22":"Fly to El Calafate."},
+  acts:[["Don Julio parrilla (book weeks ahead)","food"],["San Telmo Sunday market","city"],["Run the Bosques de Palermo lakes loop","run"],["Tango at a milonga in Palermo","night"],["Recoleta cemetery","city"]]},
+ {id:"cal",name:"El Calafate",cc:"AR",from:"2026-11-22",to:"2026-11-24",short:"Calafate",
+  days:{"2026-11-22":"Arrive. Walk at Laguna Nimez.","2026-11-23":"Perito Moreno glacier: walkways, or a guided ice walk on the glacier.","2026-11-24":"Bus to Puerto Natales (~5.5 h with border)."},
+  acts:[["Perito Moreno walkways","hike"],["Minitrekking on the glacier","hike"],["Laguna Nimez bird reserve","easy"],["Patagonian lamb dinner","food"]]},
+ {id:"pn1",name:"Puerto Natales",cc:"CL",from:"2026-11-24",to:"2026-11-25",short:"Natales",
+  days:{"2026-11-24":"Arrive, buy gas canisters and trek food, early night."},
+  acts:[["Rent or check camping gear","prep"],["Waterfront walk","easy"]]},
+ {id:"w",name:"W trek, Torres del Paine",cc:"CL",from:"2026-11-25",to:"2026-11-28",short:"W trek",
+  days:{"2026-11-25":"W trek day 1.","2026-11-26":"W trek day 2: Valle del Francés / Mirador Británico.","2026-11-27":"W trek day 3: Glaciar Grey side.","2026-11-28":"Base Torres at sunrise (order depends on your route), back to Natales."},
+  acts:[["Base Torres at sunrise","hike"],["Mirador Británico","hike"],["Glaciar Grey viewpoints","hike"]]},
+ {id:"pn2",name:"Puerto Natales",cc:"CL",from:"2026-11-28",to:"2026-11-30",short:"Natales",
+  days:{"2026-11-28":"Finish the W, ferry across Lago Grey and bus back to Natales. Hot shower, big dinner.","2026-11-29":"Rest day. Easy fjord walk or bike ride; lamb, king crab and craft beer.","2026-11-30":"Bus to El Calafate, then on to El Chaltén."},
+  acts:[["Bike along Seno Última Esperanza","bike"],["Centolla (king crab)","food"],["Cueva del Milodón","easy"]]},
+ {id:"cha",name:"El Chaltén",cc:"AR",from:"2026-11-30",to:"2026-12-04",short:"Chaltén",
+  days:{"2026-11-30":"Arrive via El Calafate. Short walk to Mirador de los Cóndores at sunset.","2026-12-01":"Laguna de los Tres / Fitz Roy (~22 km, ~1,000 m up). Pre-dawn start; swap with tomorrow if the weather is better then.","2026-12-02":"Laguna Torre (~20 km, gentle, runnable).","2026-12-03":"Loma del Pliegue Tumbado (~22 km, ~1,100 m up), or spare weather day / bike to Lago del Desierto.","2026-12-04":"Early bus to El Calafate (~3 h), fly to Ushuaia."},
+  acts:[["Laguna de los Tres (Fitz Roy)","hike"],["Laguna Torre","run"],["Loma del Pliegue Tumbado","hike"],["Gravel ride to Lago del Desierto","bike"],["Chorrillo del Salto","easy"],["Mirador de los Cóndores","easy"]]},
+ {id:"ush",name:"Ushuaia",cc:"AR",from:"2026-12-04",to:"2026-12-08",short:"Ushuaia",
+  days:{"2026-12-04":"Arrive, waterfront, king crab.","2026-12-05":"Laguna Esmeralda (~9 km, easy).","2026-12-06":"Beagle Channel boat, Isla Martillo penguins.","2026-12-07":"Laguna de los Témpanos / Vinciguerra glacier (~13 km, boggy), or a run up to Glaciar Martial.","2026-12-08":"Tierra del Fuego NP in the morning, fly to Bariloche."},
+  acts:[["Laguna Esmeralda","hike"],["Beagle Channel + penguins","boat"],["Senda Costera, Tierra del Fuego NP","hike"],["Glaciar Martial run","run"],["Laguna de los Témpanos","hike"]]},
+ {id:"bar1",name:"Bariloche + hut-to-hut trek",cc:"AR",from:"2026-12-08",to:"2026-12-12",short:"Bariloche",
+  days:{"2026-12-08":"Arrive in the evening. Hotel on Av. Bustillo; leave your big bags there for the trek. Buy trek food, check the weather and conditions.","2026-12-09":"Hut-to-hut day 1: bus to Villa Catedral, hike up to Refugio Frey (~12 km, ~750 m up, ~4 h). Sleep at Frey.","2026-12-10":"Hut-to-hut day 2: Frey → Refugio San Martín at Laguna Jakob (~9 km, 6–10 h): easy scramble at the Cancha de Fútbol pass, then a long steep scree descent. Only in good weather; ask the hut keepers about snow. Bad weather: second night at Frey, walk out the way you came.","2026-12-11":"Hut-to-hut day 3: down the Casa de Piedra valley to Colonia Suiza (~15 km, ~5 h), curanto lunch if it's on, bus back to the same hotel. Shower, stretch, early night.","2026-12-12":"Morning bus to El Bolsón (~2 h)."},
+  acts:[["Hut-to-hut: Frey → Jakob → Colonia Suiza","hike"],["Curanto in Colonia Suiza","food"],["Optional extra: Jakob → Laguna Negra (hard, exposed)","hike"],["Cervecería Patagonia","food"]]},
+ {id:"bol",name:"El Bolsón",cc:"AR",from:"2026-12-12",to:"2026-12-15",short:"Bolsón",
+  days:{"2026-12-12":"Arrive late morning. Feria Regional, pick up the bib, check the mandatory kit, 20-min shake-out jog. Pasta and an early night. Legs heavy from the trek? Consider the 15K.","2026-12-13":"RACE: Desafío Wayra 8K, 15K or 25K (06:00 start listed). Feria Regional and a brewery after.","2026-12-14":"Recovery day: sleep in, easy walk or swim at Lago Puelo, long lunch, craft beer in the evening.","2026-12-15":"Feria Regional in the morning, afternoon bus to Bariloche (~2 h)."},
+  acts:[["Desafío Wayra trail race","race"],["Feria Regional (Tue, Thu, weekends)","food"],["Lago Puelo National Park","easy"],["Cajón del Azul (if you stay longer)","hike"],["Optional: Trevelin + Los Alerces NP (~2 h south)","hike"],["Craft breweries","food"]]},
+ {id:"bar",name:"Bariloche",cc:"AR",from:"2026-12-15",to:"2026-12-17",short:"Bariloche",
+  days:{"2026-12-15":"Arrive from El Bolsón in the afternoon, stay on Av. Bustillo. Cerro Campanario at sunset, Cervecería Patagonia.","2026-12-16":"Circuito Chico by bike (~25 km from the km 18 rentals, gravel detour to Colonia Suiza), swim or kayak at Bahía López. Pack for the north.","2026-12-17":"Fly Bariloche → Jujuy via Buenos Aires; taxi or bus to Tilcara (~1.5 h). Long travel day."},
+  acts:[["Circuito Chico by bike","bike"],["Cerro Campanario chairlift or walk","easy"],["Kayak or swim at Bahía López","easy"],["Llao Llao forest walk","easy"],["Catedral summer bike park","bike"],["Cerro López","hike"],["Cervecería Patagonia","food"]]},
+ {id:"til",name:"Tilcara & Purmamarca",cc:"AR",from:"2026-12-17",to:"2026-12-20",short:"Tilcara",
+  days:{"2026-12-17":"Arrive late in Tilcara (2,460 m). Empanadas and an early night.","2026-12-18":"Garganta del Diablo hike from Tilcara (~3 h), Pucará de Tilcara ruins. Peña with live folk music in the evening.","2026-12-19":"Day trip: Purmamarca and the Paseo de los Colorados walk round the Seven Colours hill, then up the Cuesta de Lipán to the Salinas Grandes salt flat (~3,450 m). Back to sleep low.","2026-12-20":"Morning: Hornocal (14 colours, 4,350 m) via Humahuaca, or go there yesterday. Then bus to La Quiaca, walk across to Villazón, bus to Tupiza (~5 h total)."},
+  acts:[["Hornocal, Serranía de 14 Colores","hike"],["Garganta del Diablo, Tilcara","hike"],["Paseo de los Colorados, Purmamarca","easy"],["Salinas Grandes","tour"],["Pucará de Tilcara","city"],["Peña folk music night","night"],["Humita, tamales, locro","food"]]},
+ {id:"tup",name:"Tupiza",cc:"BO",from:"2026-12-20",to:"2026-12-22",short:"Tupiza",
+  days:{"2026-12-20":"Arrive from the border (2,950 m). Get bolivianos.","2026-12-21":"Red canyons: hike or mountain-bike Quebrada de Palala, El Sillar and the Puerta del Diablo; or a half-day on horseback.","2026-12-22":"Bus to Uyuni (~3–4 h)."},
+  acts:[["Quebrada de Palala + El Sillar","hike"],["Mountain-bike the canyons","bike"],["Horse ride, Butch Cassidy country","tour"],["Cañón del Inca","hike"],["Salteñas at the market","food"]]},
+ {id:"uyu",name:"Uyuni",cc:"BO",from:"2026-12-22",to:"2026-12-23",short:"Uyuni",
+  days:{"2026-12-22":"Arrive (3,650 m). Train cemetery at sunset, confirm the jeep tour, buy water and snacks."},
+  acts:[["Train cemetery","easy"],["Confirm tour, cash for park fees","prep"]]},
+ {id:"jeep",name:"Jeep tour Uyuni → San Pedro",cc:"BO",from:"2026-12-23",to:"2026-12-25",short:"Salar",
+  days:{"2026-12-23":"Jeep day 1: Salar de Uyuni, Isla Incahuasi, perspective photos. Sleep near the salt flat (~3,700 m).","2026-12-24":"Jeep day 2 (Christmas Eve): high lagoons with flamingos, Árbol de Piedra, Laguna Colorada. Basic refugio at ~4,300 m, very cold, huge stars.","2026-12-25":"Jeep day 3: Sol de Mañana geysers at dawn (~4,900 m), hot springs, Laguna Verde, border at Hito Cajón; transfer to San Pedro by midday."},
+  acts:[["Salar de Uyuni + Isla Incahuasi","tour"],["Laguna Colorada flamingos","tour"],["Sol de Mañana geysers","tour"],["Polques hot springs","easy"],["Laguna Verde + Licancabur","tour"]]},
+ {id:"spa",name:"San Pedro de Atacama",cc:"CL",from:"2026-12-25",to:"2026-12-27",short:"Atacama",
+  days:{"2026-12-25":"Arrive from the jeep tour (2,400 m). Shower, nap, Christmas dinner.","2026-12-26":"Valle de la Luna by bike, back at sunset. Stargazing tour at night.","2026-12-27":"Slow morning: Puritama hot springs or a Valle de la Muerte run. Evening night bus to Arica."},
+  acts:[["Valle de la Luna by bike","bike"],["Stargazing tour","night"],["Valle de la Muerte run + sandboarding","run"],["Puritama hot springs","easy"],["Altiplanic lagoons (skip: the jeep tour covers this)","tour"]]},
+ {id:"bus",name:"Night bus to Arica",cc:"CL",from:"2026-12-27",to:"2026-12-28",short:"Bus",
+  days:{"2026-12-27":"Slow morning in San Pedro: Puritama hot springs or a Valle de la Muerte run. Evening night bus to Arica (~10 h)."},
+  acts:[["Shared taxi Arica → Tacna","transport"]]},
+ {id:"aqp",name:"Arequipa",cc:"PE",from:"2026-12-28",to:"2026-12-29",short:"Arequipa",
+  days:{"2026-12-28":"Arica → Tacna (border) → Arequipa (~6 h). Relaxed evening in Arequipa.","2026-12-29":"Morning bus or transfer up to the Colca valley (~3–4 h)."},
+  acts:[["Santa Catalina monastery","city"],["Picantería lunch: rocoto relleno, chupe de camarones","food"],["Yanahuara viewpoint with Misti behind","easy"],["Queso helado","food"]]},
+ {id:"colca",name:"Colca valley",cc:"PE",from:"2026-12-29",to:"2026-12-30",short:"Colca",
+  days:{"2026-12-29":"Arrive in Yanque or Chivay; bike along the terraced villages, hot springs at La Calera.","2026-12-30":"Cruz del Cóndor at 8–9 am for the condors, short walk on the canyon rim, back to Arequipa in the afternoon."},
+  acts:[["Bike the Colca valley villages","bike"],["Cruz del Cóndor at 8–9 am","easy"],["Hot springs (La Calera / Yanque)","easy"],["Uyo Uyo ruins walk from Yanque","hike"]]},
+ {id:"aqp2",name:"Arequipa",cc:"PE",from:"2026-12-30",to:"2026-12-31",short:"Arequipa",
+  days:{"2026-12-30":"Slow city afternoon, picantería dinner.","2026-12-31":"Fly Arequipa → Cusco."},
+  acts:[["Santa Catalina monastery","city"],["San Camilo market","food"],["Mundo Alpaca / Yanahuara","city"]]},
+ {id:"cus",name:"Cusco",cc:"PE",from:"2026-12-31",to:"2027-01-02",short:"Cusco",
+  days:{"2026-12-31":"New Year's Eve: rest, then Plaza de Armas at midnight (wear yellow). Keep the drinks light at 3,400 m.","2027-01-01":"Rest day before the trek: San Pedro market, San Blas, gentle walk up to Sacsayhuamán. Trek briefing, pack the duffel."},
+  acts:[["Sacsayhuamán on foot","easy"],["San Pedro market","food"],["San Blas neighbourhood","city"],["Plaza de Armas at midnight on NYE","night"]]},
+ {id:"sal",name:"Salkantay trek",cc:"PE",from:"2027-01-02",to:"2027-01-05",short:"Salkantay",
+  days:{"2027-01-02":"Trek day 1: early pickup to Soraypampa, side hike to Humantay Lake (~4,200 m). Camp ~3,900 m.","2027-01-03":"Trek day 2: over Salkantay pass (~4,600 m) beside the glacier, long descent.","2027-01-04":"Trek day 3: down into cloud forest, coffee farms; on to Aguas Calientes.","2027-01-05":"Machu Picchu at sunrise, then train to Ollantaytambo."},
+  acts:[["Humantay Lake","hike"],["Salkantay pass at sunrise","hike"],["Machu Picchu: Huayna Picchu or Machu Picchu Mountain add-on","hike"],["Hot springs in Aguas Calientes","easy"]]},
+ {id:"sv",name:"Sacred Valley (Ollantaytambo)",cc:"PE",from:"2027-01-05",to:"2027-01-07",short:"Sacred V.",
+  days:{"2027-01-05":"Arrive by train from Machu Picchu. Easy dinner.","2027-01-06":"Unplanned: sleep in, then pick from the ideas list.","2027-01-07":"Taxi to Cusco airport (~1.5–2 h), fly to Lima, bus to Paracas (~3.5 h)."},
+  acts:[["Pinkuylluna ruins above town","hike"],["Pumamarca ruins walk","hike"],["Bike Maras, Moray and the Salineras","bike"],["Huchuy Qosqo trail","hike"],["Pisac market and ruins","city"],["Café afternoon in Urubamba","food"]]},
+ {id:"par",name:"Paracas",cc:"PE",from:"2027-01-07",to:"2027-01-09",short:"Paracas",
+  days:{"2027-01-07":"Arrive in the evening. Seafood dinner on the bay.","2027-01-08":"Morning boat to the Ballestas Islands (sea lions, penguins), afternoon bike ride through the Paracas National Reserve to Playa Roja and the cliffs.","2027-01-09":"Slow morning, bus back to Lima (~3.5–4 h)."},
+  acts:[["Ballestas Islands boat","boat"],["Bike the Paracas National Reserve","bike"],["Playa Roja and La Catedral viewpoint","easy"],["Huacachina dunes (day trip, ~1 h)","tour"],["Ceviche on the bay","food"]]},
+ {id:"lim",name:"Lima",cc:"PE",from:"2027-01-09",to:"2027-01-10",short:"Lima",
+  days:{"2027-01-09":"Barranco: farewell dinner (tasting menu fits here).","2027-01-10":"Fly home."},
+  acts:[["Central, Maido or Kjolle tasting menu","food"],["Malecón walk at sunset","easy"],["Barranco bars","night"]]}
+];
+
+const PACK=[
+ ["Documents and money",["Passports (6+ months valid) + copies in the cloud","Travel insurance covering trekking to 5,000 m, MTB and racing","Driving licence + International Driving Permit","Doctor-signed fitness certificate (apto físico) for Wayra","Booking confirmations offline","Clean, unmarked USD notes for Argentina and Bolivia","Two fee-free bank cards, kept in different bags","eSIM for AR/CL/PE (check Bolivia)"]],
+ ["Clothing",["Waterproof shell jacket with hood","Waterproof overtrousers","Warm insulated jacket","Fleece mid-layer","2–3 merino base-layer tops","Thermal leggings","2 hiking trousers","2–3 T-shirts / running tops","Running shorts + casual shorts","5–6 pairs socks, 5–6 underwear","Warm hat, sun cap, buff","Warm gloves + liner gloves","Smarter outfit (yellow for Cusco NYE)","Swimwear"]],
+ ["Footwear",["Broken-in hiking boots or trail shoes","Trail running shoes with grip","Road running shoes (optional)","Sandals / flip-flops"]],
+ ["Hiking gear",["40–50 L backpack","20–25 L daypack + rain cover","Trekking poles","Headlamp + spare batteries","Bottles or soft flasks (~2 L)","Water filter or purification tablets","Dry bags / packing cubes","Sleeping-bag liner"]],
+ ["Running, racing, cycling",["Running vest or belt","Watch + charger, HR strap","Electrolytes and a few gels","Padded cycling shorts","Cycling gloves"]],
+ ["Surf",["Rash vest","Face sunscreen stick"]],
+ ["Health",["Personal medication for 7 weeks (carry-on)","Blister kit","Painkillers / anti-inflammatories","Oral rehydration salts","Standby treatment for traveller's diarrhoea","Altitude: decide on acetazolamide","Sunscreen SPF 50 + SPF lip balm","Insect repellent (tábanos)","Hand sanitiser + small first-aid kit"]],
+ ["Electronics",["Phone + offline maps","Power bank (carry-on)","Universal plug adapter (AR type I, CL type C/L, BO + PE type A/C)","Cables + multi-charger","E-reader / downloads for long buses"]],
+ ["Toiletries and small stuff",["Travel-size toiletries + quick-dry towel","Earplugs + eye mask","Sunglasses cat. 3–4","Small padlock, laundry bag, zip-locks","Spork + snack box"]],
+ ["Wayra race kit (mandatory)",["Personal first-aid kit","Bib visible on the front","Whistle","Water carrying capacity (bottles or bladder)","Reusable cup","Charged phone","Emergency thermal blanket","Windproof jacket"]],
+ ["Wayra first-aid kit (mandatory contents)",["1 hydrogen peroxide","2 sterile gauze packs","2 adhesive dressings","2 bandages","2 wound-care sets (tweezers, scalpel, safety pin)","2 disposable gloves","1 small waste bag","4 wooden splints","1 thermal blanket (check if the mandatory one counts)"]],
+ ["Wayra race kit (recommended)",["Sunglasses","Poles","Cap","Sunscreen","Food reserve"]]
+];
+
+const WARNS=[
+ {id:"w-frey",sev:"high",by:"2026-11-15",t:"Book Refugio Frey (9 Dec) and Refugio Jakob (10 Dec)",d:"Overnight stays need a confirmed reservation before you set out; summer beds go fast (Club Andino Bariloche). Also fill in the free, mandatory trekking registration of Nahuel Huapi National Park, and consider a guide for the Frey → Jakob section."},
+ {id:"w-flights-dec2",sev:"high",by:"2026-11-12",t:"Book the December flights (new dates)",d:"Calafate→Ushuaia (4 Dec), Ushuaia→Bariloche (8 Dec), Bariloche→Jujuy via Buenos Aires (17 Dec), Arequipa→Cusco (31 Dec), Cusco→Lima (7 Jan). Holiday flights in Patagonia sold out in late Dec 2025. If you already booked 6 Dec / 10 Dec or Puerto Montt–Santiago–Calama, change or cancel them."},
+ {id:"w-uyuni",sev:"high",by:"2026-11-30",t:"Book the Uyuni → San Pedro jeep tour (23–25 Dec)",d:"3 days / 2 nights ending in San Pedro, roughly US$250–350 per person. Christmas week: book ahead and confirm it runs on 23 Dec. Park fee (Eduardo Avaroa reserve) is paid in cash on the day."},
+ {id:"w-cusco-nye",sev:"high",by:"2026-11-15",t:"Book Cusco for New Year's Eve",d:"Prices climb and central rooms go first."},
+ {id:"w-tasting",sev:"med",by:"2026-11-20",t:"Reserve a Lima tasting menu",d:"Central, Maido and Kjolle fill months ahead."},
+ {id:"w-wayra",sev:"med",by:"2026-11-30",t:"Enter Desafío Wayra (Sun 13 Dec)",d:"8K, 15K or 25K. Entries close 10 Dec on ticketsati.com/event/desafio_wayra. Mandatory kit is in the packing list."},
+ {id:"w-apto",sev:"med",by:"2026-11-19",t:"Get a signed fitness certificate before you fly",d:"Argentine races often ask for an apto físico signed by a doctor."},
+ {id:"w-bolivia",sev:"med",by:"2026-12-15",t:"Bolivia: cash and news check",d:"Bring enough USD cash for Tupiza, Uyuni and the tour; cards rarely work. Check the news for fuel shortages and road blockades (bloqueos) the week before. Check the entry rules for Dutch passports."},
+ {id:"w-buses",sev:"med",by:"2026-12-15",t:"Book the 27 Dec night bus to Arica",d:"Holiday week; buy ahead in San Pedro or online."},
+ {id:"w-alt",sev:"med",by:"2026-11-19",t:"Altitude plan for Bolivia, Colca and Cusco",d:"The jeep tour sleeps at ~4,300 m and reaches ~4,900 m; decide on acetazolamide; keep New Year's Eve light at 3,400 m; the Salkantay pass is ~4,600 m."},
+ {id:"w-ins",sev:"med",by:"2026-11-19",t:"Check insurance cover",d:"Trekking up to 5,000 m, mountain biking and trail racing."},
+ {id:"w-cash",sev:"low",by:"2026-11-19",t:"Bring clean USD notes",d:"Argentine exchange shops refuse marked or torn notes."},
+ {id:"w-food",sev:"low",by:"2026-12-25",t:"No fresh food across the Chile border",d:"Chile's customs bans fresh fruit, veg and meat; eat it before crossing."},
+ {id:"w-salkantay",sev:"high",by:"2026-11-15",t:"Book the Salkantay trek (2–5 Jan)",d:"Through an agency, including Machu Picchu entry for 5 Jan and the train to Ollantaytambo. New Year week sells out."},
+ {id:"w-sv",sev:"low",by:"2026-12-20",t:"Book the first night in Ollantaytambo (5 Jan)",d:"Only the first night; book the rest there as you go."},
+ {id:"w-paracas",sev:"low",by:"2026-12-31",t:"Book Paracas (7–9 Jan)",d:"Two nights near the bay, the Lima → Paracas bus on 7 Jan and back on 9 Jan."},
+ {id:"w-rain",sev:"low",by:"2026-12-31",t:"Rainy season in Cusco",d:"Clear mornings, afternoon storms; expect mud and possibly snow on the Salkantay pass. Pack full rain gear."}
+];
+
+const FESTS=[
+ {d:"2026-11-20",to:"2026-11-22",w:"Argentina",t:"Long weekend",x:"The Día de la Soberanía holiday moves to Mon 23 Nov, so Fri 20 – Mon 23 is a long weekend: busier restaurants, flights and El Calafate."},
+ {d:"2026-12-08",w:"Argentina",t:"Public holiday: Inmaculada Concepción",x:"The traditional day to put up Christmas trees. Ushuaia lights its town tree by the Ushuaia sign in the evening; you'll be flying to Bariloche."},
+ {d:"2026-12-12",w:"El Bolsón",t:"Feria Regional (craft and food market)",x:"Across from Plaza Pagano, 10:00–17:00 on Tuesdays, Thursdays, weekends and holidays. Good for race-eve snacks."},
+ {d:"2026-12-13",w:"El Bolsón",t:"Feria Regional + Desafío Wayra",x:"Market open 10:00–17:00 after the race."},
+ {d:"2026-12-15",w:"El Bolsón",t:"Feria Regional (craft and food market)",x:"Across from Plaza Pagano, 10:00–17:00. Last browse before the bus to Bariloche."},
+ {d:"2026-12-24",w:"Bolivia / Chile / Argentina",t:"Nochebuena (Christmas Eve)",x:"The big celebration across the region is the night of the 24th, with dinner and fireworks or midnight mass at 12. You'll be at the refugio near Laguna Colorada: take a treat for the group."},
+ {d:"2026-12-25",w:"Chile",t:"Christmas Day (public holiday)",x:"Some shops and restaurants in San Pedro close or open late; tours usually run. Book Christmas dinner on arrival."},
+ {d:"2026-12-31",w:"Cusco",t:"New Year's Eve in the Plaza de Armas",x:"Locals wear yellow for luck, run laps of the plaza at midnight and eat 12 grapes. Fireworks all over the city."},
+ {d:"2027-01-01",w:"Peru",t:"New Year's Day (public holiday)",x:"Quiet morning; many shops and some museums closed."},
+ {d:"2027-01-05",to:"2027-01-06",w:"Ollantaytambo",t:"Bajada de Reyes (Epiphany festival)",x:"On the 5th, people from the surrounding valleys carry the Niño Jesús of Marcacocha into town and the party runs through the night. On the 6th: dancing all day in the streets and main square, a procession, mass, and in the afternoon a bullfight by the ruins."}
+];
+
+/* typical night-low / day-high in °C per stop and month (long-term averages, rounded; mountains and wind make it feel colder) */
+const CLIM={ba:{"11":[15,25],"12":[18,28]},cal:{"11":[4,15],"12":[6,18]},pn1:{"11":[4,13]},w:{"11":[3,13]},pn2:{"11":[4,13]},cha:{"11":[3,15],"12":[6,17]},ush:{"12":[3,12]},bar1:{"12":[7,21]},bol:{"12":[7,22]},bar:{"12":[7,21]},til:{"12":[10,25]},tup:{"12":[10,27]},uyu:{"12":[4,21]},jeep:{"12":[-10,15]},spa:{"12":[8,28]},bus:{"12":[18,26]},aqp:{"12":[9,23]},colca:{"12":[3,19]},aqp2:{"12":[9,23]},cus:{"12":[7,20],"01":[7,20]},sal:{"01":[0,17]},sv:{"01":[8,22]},par:{"01":[19,28]},lim:{"01":[19,28]}};
+const CNOTE={jeep:"Nights at the ~4,300 m refugio can drop to −10°C or colder; days are 15°C+ in the sun.",sal:"Camp at ~3,900 m is around freezing at night; the pass (~4,600 m) can be below zero.",cha:"Wind and shade make it feel colder.",w:"Wind chill can make it feel 5–10°C colder.",cal:"Wind makes it feel colder.",ush:"Wind and rain make it feel colder.",colca:"Colder in the early morning at the Cruz del Cóndor.",til:"Dry nights are cooler; afternoon storms are common.",cus:"Rainy season: dry mornings, showers in the afternoon.",sv:"Rainy season: dry mornings, showers in the afternoon."};
+
+/* schematic map */
+const COAST=[[-77.3,8.7],[-75.5,10.5],[-71.5,12.4],[-67,10.8],[-62,10.7],[-60,8.5],[-57,6],[-52,4.5],[-50,1.8],[-48.5,-1],[-44,-2.5],[-40,-2.8],[-35,-5.2],[-35,-9],[-37.3,-12.5],[-39,-17.5],[-40.5,-21],[-42,-23],[-45,-23.8],[-48.5,-26],[-48.7,-28.5],[-51,-31],[-53.3,-34],[-55,-34.9],[-57.2,-35.4],[-58.3,-34.4],[-57.6,-36.4],[-57.5,-38.2],[-62,-39],[-62.3,-40.8],[-65,-41],[-64.5,-42.5],[-63.7,-42.8],[-65.2,-44.5],[-67.3,-46],[-65.8,-47.8],[-67.5,-49.5],[-68.9,-51.6],[-68.4,-52.3],[-68.6,-54.8],[-65.5,-55],[-67.5,-55.4],[-70,-55.1],[-72.5,-53.5],[-74.5,-52],[-75.5,-48],[-74.5,-45],[-73.8,-43.3],[-73.5,-41.5],[-73.7,-38],[-73,-36.5],[-71.7,-33],[-71.5,-30],[-71,-27],[-70.5,-23.5],[-70.2,-18.5],[-71.4,-17.5],[-75,-15],[-76.3,-13.4],[-77.2,-12],[-79,-8],[-81.2,-6],[-80.9,-2.2],[-80,0],[-79,1.6],[-77.6,4],[-77.4,7]];
+const PLACES=[
+ {id:"ba",n:"Buenos Aires",lon:-58.38,lat:-34.6,stops:["ba"],lab:"l",major:1},
+ {id:"cal",n:"El Calafate",lon:-72.27,lat:-50.34,stops:["cal"],lab:"r",major:1},
+ {id:"pn",n:"Puerto Natales",lon:-72.5,lat:-51.73,stops:["pn1","pn2"],lab:"r",major:1},
+ {id:"w",n:"Torres del Paine (W trek)",lon:-73.0,lat:-50.95,stops:["w"],lab:"l"},
+ {id:"cha",n:"El Chaltén",lon:-72.89,lat:-49.33,stops:["cha"],lab:"l",major:1},
+ {id:"ush",n:"Ushuaia",lon:-68.3,lat:-54.8,stops:["ush"],lab:"r",major:1},
+ {id:"bar",n:"Bariloche",lon:-71.3,lat:-41.13,stops:["bar1","bar"],lab:"r",major:1},
+ {id:"bol",n:"El Bolsón",lon:-71.53,lat:-41.96,stops:["bol"],lab:"r"},
+ {id:"til",n:"Tilcara",lon:-65.40,lat:-23.58,stops:["til"],lab:"r",major:1},
+ {id:"tup",n:"Tupiza",lon:-65.72,lat:-21.44,stops:["tup"],lab:"r",major:1},
+ {id:"uyu",n:"Uyuni",lon:-66.83,lat:-20.46,stops:["uyu"],lab:"r",major:1},
+ {id:"jeep",n:"Salar + lagoons (jeep)",lon:-67.78,lat:-22.2,stops:["jeep"],lab:"l"},
+ {id:"spa",n:"San Pedro de Atacama",lon:-68.2,lat:-22.91,stops:["spa"],lab:"r",major:1},
+ {id:"ari",n:"Arica",lon:-70.3,lat:-18.48,stops:["bus"],lab:"l"},
+ {id:"aqp",n:"Arequipa",lon:-71.54,lat:-16.4,stops:["aqp","aqp2"],lab:"r",major:1},
+ {id:"col",n:"Colca valley",lon:-71.6,lat:-15.64,stops:["colca"],lab:"r"},
+ {id:"cus",n:"Cusco",lon:-71.97,lat:-13.53,stops:["cus"],lab:"r",major:1},
+ {id:"sal",n:"Salkantay + Machu Picchu",lon:-72.55,lat:-13.25,stops:["sal"],lab:"l"},
+ {id:"sv",n:"Ollantaytambo",lon:-72.26,lat:-13.05,stops:["sv"],lab:"r"},
+ {id:"par",n:"Paracas",lon:-76.25,lat:-13.83,stops:["par"],lab:"r"},
+ {id:"lim",n:"Lima",lon:-77.04,lat:-12.05,stops:["lim"],lab:"l",major:1}
+];
+const WAY={calama:[-68.93,-22.46],cal:[-72.27,-50.34]};
+const SEGS=[["ba","cal","flight"],["cal","pn","road"],["pn","w","foot"],["w","pn","road"],["pn","cal","road"],["cal","cha","road"],["cha","cal","road"],["cal","ush","flight"],["ush","bar","flight"],["bar","bol","road"],["bol","bar","road"],["bar","til","flight"],["til","tup","road"],["tup","uyu","road"],["uyu","jeep","road"],["jeep","spa","road"],["spa","ari","road"],["ari","aqp","road"],["aqp","col","road"],["col","aqp","road"],["aqp","cus","flight"],["cus","sal","foot"],["sal","sv","foot"],["sv","cus","road"],["cus","lim","flight"],["lim","par","road"],["par","lim","road"]];
+const VIEWS={all:[-82,-54,-56,-10],south:[-76.5,-56,-56,-32],north:[-79.5,-61.5,-25.2,-11]};

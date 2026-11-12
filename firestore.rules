@@ -1,18 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each signed-in user can read and write only their own progress (and private word list).
+    // The two travellers. Replace the two addresses with the emails you sign up with, in lower case.
+    function traveller() {
+      return request.auth != null
+        && request.auth.token.email in ['traveller1@example.com', 'traveller2@example.com'];
+    }
+    // Each signed-in user can read and write only their own data
+    // (Talk to Juan progress, private word list, trip packing list).
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
       match /{rest=**} {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
     }
-    // The shared word list (from your own copy of the dictionary): only the listed travellers.
-    // Replace the two addresses with the emails you sign up with, in lower case.
+    // Talk to Juan: the shared word list.
     match /shared/{doc} {
-      allow read, write: if request.auth != null
-        && request.auth.token.email in ['traveller1@example.com', 'traveller2@example.com'];
+      allow read, write: if traveller();
+    }
+    // Trip planner: bookings, tickets, stars and edited days, shared by the two travellers only.
+    match /trip/{rest=**} {
+      allow read, write: if traveller();
     }
   }
 }

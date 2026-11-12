@@ -17,7 +17,7 @@ Each person creates an account (email + password) in Setup; their answers sync t
 2. **Build → Authentication → Get started → Sign-in method → Email/Password → Enable**.
 3. **Authentication → Settings → Authorized domains → Add domain** → `donkuan.github.io`.
 4. **Build → Firestore Database → Create database** → location `eur3 (europe-west)` → start in **production mode**.
-5. **Firestore → Rules** → paste the contents of [`firestore.rules`](firestore.rules), put your travellers' sign-up emails in the `shared` rule (lower case; keep them out of this public repo) → **Publish**.
+5. **Firestore → Rules** → paste the contents of [`firestore.rules`](firestore.rules), put your two travellers' sign-up emails in the `traveller()` function at the top (lower case; keep them out of this public repo) → **Publish**.
 6. **Project settings (gear) → Your apps → Web `</>`** → nickname "Talk to Juan" (no Firebase Hosting) → copy the `firebaseConfig` values into [`firebase-config.js`](firebase-config.js) and push.
 
 The config values are public by design; the Firestore rules make sure every user can only read and write their own data.
@@ -26,3 +26,12 @@ Slang topics follow [Franco Spanish School's Argentine slang list](https://franc
 
 ## Hosting
 Settings → Pages → Deploy from a branch → `main` / root. The site is then at `https://<user>.github.io/talktojuan/`.
+
+## Trip planner (`/trip/`)
+The Patagonia to Lima planner lives in [`trip/`](trip/) and is at `https://<user>.github.io/talktojuan/trip/`. It uses the same Firebase project and accounts as Talk to Juan.
+
+- Calendar with each day's plan (editable), festivities and typical temperatures; map; ideas per stop with shared stars; bookings ledger; personal packing list; plan-ahead checklist.
+- **Tickets**: attach PDFs or photos to a booking. They're stored in Firestore itself, split into pieces of ~700 KB (Firebase Storage needs the paid Blaze plan; Firestore's free tier is plenty for a trip's tickets). Photos are shrunk before upload.
+- **Offline**: the app is cached by its own service worker (`trip/sw.js`); every ticket is copied into the phone's IndexedDB as soon as the app sees it online; bookings and edits come from Firestore's offline cache. Changes made offline (including new tickets) upload when the phone is back online.
+- **Who can see it**: only the two emails in the `traveller()` rule. No booking data or tickets are in this repo.
+- **Moving from the old claude.ai planner**: there, tap "Export for the new app"; here, Account → Import file.
