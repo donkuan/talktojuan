@@ -4,7 +4,7 @@ service cloud.firestore {
     // The two travellers. Replace the two addresses with the emails you sign up with, in lower case.
     function traveller() {
       return request.auth != null
-        && request.auth.token.email in ['traveller1@example.com', 'traveller2@example.com'];
+        && request.auth.token.email in ['kuanchung@live.nl', 'mirnabosnjak@hotmail.com'];
     }
     // Each signed-in user can read and write only their own data
     // (Talk to Juan progress, private word list, trip packing list).
