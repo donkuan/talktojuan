@@ -135,6 +135,7 @@ function renderSheet(){
   if(fx.length){const fl=el("ul",{class:"mini fests"});
     for(const f of fx)fl.append(el("li",{},el("span",{class:"fx"},"✦"),el("span",{},el("strong",{text:f.t}),` · ${f.w}. ${f.x}`)));
     sh.append(el("div",{},el("div",{class:"eyebrow",text:"Local happenings",style:"margin-bottom:6px"}),fl))}
+  {const ab=aboutBlock(s.id);if(ab)sh.append(el("details",{class:"aboutd",open:S.sel===s.from?true:null},el("summary",{},`About ${s.name.split(/[,+(]/)[0].trim()}: history, sights, food`),ab))}
   const bks=bookingsOn(S.sel);const bl=el("ul",{class:"mini"});
   if(bks.length)for(const b of bks)bl.append(el("li",{},el("span",{class:"pill "+(b.status==="booked"?"booked":"todo"),text:b.status==="booked"?"Booked":"To book"}),el("span",{style:"min-width:0"},`${b.title}${b.ref?" · "+b.ref:""}`,fileList(b,true))));
   else bl.append(el("li",{class:"muted",text:S.user?"No bookings on this day.":"Sign in to see your bookings."}));
@@ -149,6 +150,12 @@ function renderSheet(){
 }
 
 /* ---------- stops ---------- */
+/* history, popular visits and food for a stop */
+function aboutBlock(id){const x=infoFor(id);if(!x)return null;
+  const foods=el("div",{class:"foods"},x.eat.map(([n,f])=>el("span",{class:"food"},n,f.includes("g")?el("span",{class:"fl",title:"Usually contains gluten (wheat/barley)",text:"G"}):null,f.includes("m")?el("span",{class:"fl",title:"Usually contains cow's milk",text:"M"}):null)));
+  return el("div",{class:"about"},el("p",{class:"hist",text:x.h}),
+    el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Most popular"}),el("div",{class:"seeline",text:x.see.join(" · ")})),
+    el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Eat & drink"}),foods,el("div",{class:"muted",style:"font-size:12px;margin-top:4px",text:"G = usually has gluten (wheat/barley), M = usually has cow's milk. Recipes vary: ask."})))}
 function renderStops(){
   const w=$("#stops");w.innerHTML="";
   for(const s of STOPS){
@@ -159,9 +166,12 @@ function renderStops(){
         el("button",{class:"star",type:"button","aria-pressed":String(on),"aria-label":(on?"Unstar ":"Star ")+a[0],disabled:!canWrite(),title:canWrite()?"":"Sign in to star",onclick:()=>togglePick(key,!on)},on?"★":"☆"),
         el("span",{class:"t"},a[0],el("span",{class:"tag",text:a[1]}))));
     }
+    const first=STOPS.find(t=>infoFor(t.id)===infoFor(s.id))===s;const ab=aboutBlock(s.id);
     w.append(el("article",{class:"stop c-"+s.cc},
       el("div",{class:"when"},el("b",{text:`${fmt(s.from)} – ${fmt(s.to)}`}),el("span",{text:`${nights(s)} night${nights(s)>1?"s":""}`}),el("span",{class:"chip c-"+s.cc,text:s.cc,style:"justify-self:start"})),
-      el("div",{},el("h3",{text:s.name}),ul)));
+      el("div",{style:"min-width:0"},el("h3",{text:s.name}),
+        ab?(first?ab:el("details",{class:"aboutd"},el("summary",{},"History, sights and food (as on the earlier visit)"),ab)):null,
+        el("div",{class:"eyebrow",style:"margin:12px 0 0",text:"Ideas · star the ones you want"}),ul)));
   }
 }
 
@@ -442,6 +452,7 @@ function renderMap(){
       el("div",{class:"eyebrow",text:`Stop ${placeIndex[p.id]+1} · ${placeCc(p)}`}),el("h3",{text:p.n}),
       el("div",{class:"muted",text:st.map(s=>`${fmt(s.from)} – ${fmt(s.to)} (${nights(s)} night${nights(s)>1?"s":""})`).join(" · ")}),
       t?el("div",{},el("strong",{class:"mono",text:`${t[0]}° / ${t[1]}°C`}),el("span",{class:"muted",text:" typical night low / day high. "+(CNOTE[st[0].id]||"Long-term average for the month.")})):null,
+      infoFor(st[0].id)?el("div",{class:"hist",text:infoFor(st[0].id).h}):null,
       el("div",{text:st[0].acts.slice(0,3).map(a=>a[0]).join(" · ")}),
       el("div",{class:"navrow"},el("button",{class:"btn sm",type:"button",onclick:()=>{S.sel=st[0].from;S.tab="calendar";render()}},"Open in calendar"),
         el("button",{class:"btn sm",type:"button",onclick:()=>{S.tab="stops";render();document.querySelector(".stop:nth-child("+(STOPS.indexOf(st[0])+1)+")")?.scrollIntoView({block:"start"})}},"All ideas here"))))}
