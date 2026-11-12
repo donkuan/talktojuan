@@ -18,7 +18,7 @@ function toast(t){const o=$(".toast");if(o)o.remove();const d=el("div",{class:"t
 
 /* ---------- state ---------- */
 const S={tab:"today",cards:store.get("cards",{}),log:store.get("log",{}),
-  set:Object.assign({newPer:8,size:20,dir:"es",rate:.9,voice:""},store.get("settings",{})),
+  set:Object.assign({newPer:8,size:20,dir:"es",order:"random",rate:.9,voice:""},store.get("settings",{})),
   words:null,wordsSource:"",
   ui:Object.assign({wSrc:"common",wBand:"1-100",wPos:"all",wq:"",pCat:"basics",aSub:"slang",sCat:"people",pq:""},store.get("ui",{}))};
 const ukey=k=>(S.user?"u:"+S.user.uid+":":"")+k;
@@ -40,8 +40,8 @@ function slangCards(catId){const out=[];for(const c of SLANG_CATS){if(catId&&cat
 const voseoCards=()=>VOSEO.map(([tu,vos,en])=>({id:"v:"+hash(vos),deck:"voseo",es:vos,en:en+"  ·  tú form: "+tu,tag:"ar",tu}));
 const regionalCards=()=>REGIONAL.map(([ar,gen,cl,pe,en])=>({id:"r:"+hash(ar),deck:"regional",es:ar,en:en,tag:"ar",note:`General: ${gen} · Chile: ${cl} · Peru: ${pe}`}));
 const neighbourCards=()=>NEIGHBOURS.map(([es,en,tag,ex,exEn])=>({id:"n:"+hash(es),deck:"neighbours",es,en,tag,ex,exEn}));
-const COMMON_BANDS=[["1-100","1–100"],["101-250","101–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-2000","1,001–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"]];
-const BANDS=[["1-250","1–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-1500","1,001–1,500"],["1501-2000","1,501–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"]];
+const COMMON_BANDS=[["1-100","1–100"],["101-250","101–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-2000","1,001–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"],["1-5000","All 5,000"]];
+const BANDS=[["1-250","1–250"],["251-500","251–500"],["501-1000","501–1,000"],["1001-1500","1,001–1,500"],["1501-2000","1,501–2,000"],["2001-3000","2,001–3,000"],["3001-4000","3,001–4,000"],["4001-5000","4,001–5,000"],["1-5000","All 5,000"]];
 const POSN={det:"determiner",v:"verb",nm:"noun (m)",nf:"noun (f)",nc:"noun (m/f)","nm/f":"noun (m/f)",nmf:"noun (m/f)",n:"noun",adj:"adjective",adv:"adverb",prep:"preposition",conj:"conjunction",pron:"pronoun",art:"article",num:"number",interj:"interjection"};
 const posGroup=p=>p==="v"?"verbs":p.startsWith("n")&&p!=="num"?"nouns":p==="adj"?"adjectives":"other";
 /* Two word lists: "common" = public Everyday list (open frequency data, own glosses), "dict" = private dictionary import. */
@@ -73,7 +73,9 @@ function grade(card,g){// g: 0 again, 1 hard, 2 good, 3 easy
 const isDue=c=>{const st=S.cards[c.id];return st&&st.d<=today()};
 const isNew=c=>!S.cards[c.id];
 const isKnown=c=>{const st=S.cards[c.id];return st&&st.i>=3};
-function buildSession(cards,{onlyDue=false}={}){const due=shuffle(cards.filter(isDue));const fresh=onlyDue?[]:cards.filter(isNew).slice(0,S.set.newPer);
+/* New cards: a random pick from the chosen range (setting), or the most common first. */
+const pickNew=(cards,n)=>{const f=cards.filter(isNew);return(S.set.order==="freq"?f:shuffle(f)).slice(0,n)};
+function buildSession(cards,{onlyDue=false}={}){const due=shuffle(cards.filter(isDue));const fresh=onlyDue?[]:pickNew(cards,S.set.newPer);
   return [...due.slice(0,Math.max(0,S.set.size-fresh.length)),...fresh].slice(0,S.set.size)}
 function streak(){let n=0,t=today();if(!dayCount(isoDay(t)))t--;while(dayCount(isoDay(t))){n++;t--}return n}
 
@@ -201,10 +203,14 @@ const TABS=[["today","Today",'<path d="M4 12h3l3-8 4 16 3-8h3"/>'],["words","Wor
   ["more","Setup",'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>']];
 function renderTabs(){const t=$("#tabs");t.innerHTML="";for(const[id,label,path]of TABS)t.append(el("a",{href:"#"+id,"aria-current":S.tab===id?"page":null,
   html:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg><span>${label}</span>`}))}
+function dirSwitch(){const w=el("div",{class:"chips dirsw",role:"group","aria-label":"Test direction"});
+  const paint=()=>{for(const b of w.children)b.setAttribute("aria-pressed",String(b.dataset.d===S.set.dir))};
+  for(const[k,l]of[["es","Spanish → English"],["en","English → Spanish"],["mix","Mixed"]])w.append(el("button",{class:"chip",type:"button","data-d":k,"aria-pressed":String(S.set.dir===k),onclick:()=>{S.set.dir=k;saveSet();paint()}},l));
+  return w}
 function practiseRow(getCards,label){const go=mode=>()=>startSession(getCards(),mode,label);
-  return el("div",{class:"practise"},el("button",{class:"btn primary sm",type:"button",onclick:go("flash")},"Flashcards"),
-    el("button",{class:"btn sm",type:"button",onclick:go("choice")},"Multiple choice"),el("button",{class:"btn sm",type:"button",onclick:go("type")},"Type it"),
-    el("button",{class:"btn sm",type:"button",onclick:go("listen")},"Listen"))}
+  return el("div",{class:"stack",style:"gap:8px"},dirSwitch(),el("div",{class:"practise"},el("button",{class:"btn primary sm",type:"button",onclick:go("flash")},"Flashcards"),
+    el("button",{class:"btn sm",type:"button",onclick:go("choice")},"Multiple choice"),el("button",{class:"btn sm",type:"button",onclick:go("type")},"Type in Spanish"),
+    el("button",{class:"btn sm",type:"button",onclick:go("listen")},"Listen")))}
 
 function viewToday(){const v=el("div",{class:"stack"});const t=today();
   const all=Object.entries(DECKS).map(([k,d])=>[k,d,d.all()]);
@@ -217,7 +223,7 @@ function viewToday(){const v=el("div",{class:"stack"});const t=today();
     el("div",{class:"stats"},el("div",{class:"stat"},el("b",{text:String(streak())}),el("span",{class:"muted small",text:"day streak"})),
       el("div",{class:"stat"},el("b",{text:String(done)}),el("span",{class:"muted small",text:"answers today"}))),
     el("div",{class:"row"},el("button",{class:"btn primary",type:"button",disabled:!dueAll.length,onclick:()=>startSession(shuffle(dueAll).slice(0,S.set.size),"flash","Mixed review")},"Review due cards"),
-      el("button",{class:"btn",type:"button",onclick:()=>{const fresh=[...phraseCards().filter(isNew).slice(0,4),...wordCards("1-1500","all",S.words?"dict":"common").filter(isNew).slice(0,4),...slangCards().filter(isNew).slice(0,2)];
+      el("button",{class:"btn",type:"button",onclick:()=>{const fresh=[...pickNew(phraseCards(),4),...pickNew(wordCards("1-1500","all",S.words?"dict":"common"),4),...pickNew(slangCards(),2)];
         startSession(shuffle(fresh),"flash","Something new")}},"Learn something new"))));
   const p=el("div",{class:"panel"},el("h3",{style:"margin-top:0",text:"Your decks"}));
   for(const[k,d,cards]of all){if(k==="words"&&!S.words&&!S.user)continue;const known=cards.filter(isKnown).length,seen=cards.filter(c=>!isNew(c)).length,due=cards.filter(isDue).length;
@@ -323,9 +329,12 @@ function viewMore(){const v=el("div",{class:"stack"});v.append(el("h2",{text:"Se
     voices.length?el("label",{class:"field"},"Spanish voice",vs):el("p",{class:"muted",style:"margin:0",text:"No Spanish voice found on this device. On iPhone: Settings → Accessibility → Spoken Content → Voices → Spanish. On Android: install Spanish in Google's text-to-speech."}),
     el("label",{class:"field"},"Speed",rate),el("button",{class:"btn sm",type:"button",style:"justify-self:start",onclick:()=>say("Hola, ¿cómo andás? Me llamo Juan.","ar")},"▶ Test voice")));
   const num=(k,label,min,max)=>el("label",{class:"field"},label,el("input",{type:"text",inputmode:"numeric",value:String(S.set[k]),onchange:e=>{const n=Math.max(min,Math.min(max,parseInt(e.target.value)||S.set[k]));S.set[k]=n;e.target.value=n;saveSet()}}));
+  const order=el("select",{"aria-label":"Order of new words",onchange:e=>{S.set.order=e.target.value;saveSet()}},
+    ...[["random","Random from the chosen range"],["freq","Most common first"]].map(([k,l])=>el("option",{value:k,selected:S.set.order===k,text:l})));
   const dir=el("select",{"aria-label":"Card direction",onchange:e=>{S.set.dir=e.target.value;saveSet()}},
     ...[["es","Spanish → English"],["en","English → Spanish"],["mix","Mixed"]].map(([k,l])=>el("option",{value:k,selected:S.set.dir===k,text:l})));
-  v.append(el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Study sessions"}),el("div",{class:"grid2"},num("size","Cards per session",5,60),num("newPer","New cards per session",0,30)),el("label",{class:"field"},"Flashcard direction",dir)));
+  v.append(el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Study sessions"}),el("div",{class:"grid2"},num("size","Cards per session",5,60),num("newPer","New cards per session",0,30)),el("label",{class:"field"},"Test direction (flashcards and multiple choice)",dir),el("label",{class:"field"},"New words",order),
+    el("p",{class:"muted small",style:"margin:0",text:"Type in Spanish always asks for the Spanish; Listen always plays the Spanish."})));
   v.append(el("div",{class:"panel stack"},el("h3",{style:"margin-top:0",text:"Word list"}),
     el("p",{style:"margin:0",class:"muted",text:S.words?`${S.words.length.toLocaleString("en")} words loaded (${S.wordsSource}).`:"No word list loaded."}),
     el("label",{class:"btn sm",style:"justify-self:start"},S.words?"Replace words.json":"Import words.json",el("input",{type:"file",accept:".json,application/json",hidden:true,onchange:e=>e.target.files[0]&&importWords(e.target.files[0])}))));
@@ -355,7 +364,7 @@ function startSession(cards,mode,label){if(!cards.length){toast("Nothing to stud
   const deckOf=cards[0].deck;SES.pool=(deckOf&&DECKS[deckOf]?DECKS[deckOf].all():cards);if(SES.pool.length<4)SES.pool=Object.values(DECKS).flatMap(d=>d.all());
   $("#study").hidden=false;document.body.style.overflow="hidden";drawCard()}
 function endSession(){$("#study").hidden=true;document.body.style.overflow="";try{speechSynthesis.cancel()}catch(e){}SES=null;render()}
-function frontIsEs(c){const d=S.set.dir;if(SES.mode==="type")return false;if(SES.mode==="listen")return true;if(d==="mix")return hash(c.id+today())[0]<"i";return d!=="en"}
+function frontIsEs(c){const d=S.set.dir;if(SES.mode==="type")return false;if(SES.mode==="listen")return true;if(d==="mix"){SES.mix=SES.mix||{};if(!(c.id in SES.mix))SES.mix[c.id]=Math.random()<.5;return SES.mix[c.id]}return d!=="en"}
 function answerBits(c){const bits=[];
   if(c.deck==="words"||c.deck==="common")bits.push(el("div",{class:"sub",text:(POSN[c.pos]||c.pos)+" · #"+c.rank}));
   if(c.arv)bits.push(el("div",{class:"sub"},tagEl("ar")," vos: ",el("b",{text:c.arv})," ",sayBtn(c.arv,"ar","xs")));
