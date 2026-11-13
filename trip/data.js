@@ -225,3 +225,29 @@ const INFO={
   eat:[["Ceviche",""],["Causa limeña",""],["Anticuchos (grilled heart skewers)",""],["Lomo saltado","g"],["Ají de gallina","gm"],["Papa a la huancaína","gm"],["Picarones","g"],["Suspiro a la limeña","m"],["Pisco sour, chilcano",""],["Chicha morada, Inca Kola",""]]}
 };
 const infoFor=id=>INFO[INFO_ALIAS[id]||id]||null;
+
+/* Fish, seafood and vegetarian picks per place: [dish, "f" fish/seafood | "v" vegetarian, flags g/m as above]. */
+const PICKS={
+ ba:[["Ceviche at a Peruvian place (Palermo, Abasto)","f",""],["Rabas (fried squid rings)","f","g"],["Grilled langostinos or white fish at a parrilla","f",""],["Provoleta","v","m"],["Fainá (chickpea flatbread)","v",""],["Humita en chala","v","m"],["Grilled veg and papas al plomo","v",""]],
+ cal:[["Patagonian trout","f",""],["Centolla when it's on the menu","f",""],["Wild mushroom risotto","v","m"],["Calafate-berry desserts","v","m"]],
+ pn1:[["Centolla (king crab), plain","f",""],["Chupe de centolla (baked crab gratin)","f","gm"],["Ceviche of salmon or merluza austral","f",""],["Paila marina (seafood soup)","f",""],["Machas a la parmesana (razor clams)","f","m"],["Pastel de choclo, vegetarian version (ask)","v",""]],
+ w:[["Refugios cook a vegetarian option: ask when booking","v",""]],
+ cha:[["Grilled trout","f",""],["Vegetable or cheese empanadas","v","gm"],["Calafate ice cream","v","m"]],
+ ush:[["Centolla (king crab)","f",""],["Merluza negra (toothfish)","f",""],["Mejillones (Beagle Channel mussels)","f",""],["Cazuela de mariscos (seafood stew)","f",""],["Trout","f",""]],
+ bar1:[["Ahumados: smoked trout and salmon platter","f",""],["Grilled trout","f",""],["Cheese fondue","v","gm"],["Wild mushroom dishes","v",""],["Berry desserts","v","m"]],
+ bol:[["Smoked trout","f",""],["Organic veg and berries at the Feria","v",""],["Vegetable empanadas","v","g"]],
+ til:[["Humita (sweetcorn)","v","m"],["Quinoa croquettes and salads","v",""],["Tamales de verdura (ask)","v",""],["Andean potatoes (papas andinas)","v",""],["Locro, vegetarian version (ask)","v",""]],
+ tup:[["Sopa de quinua (ask for a veg broth)","v",""],["Api with a cheese pastel","v","gm"]],
+ uyu:[["Quinoa risotto","v","m"],["Quinoa soup","v",""]],
+ jeep:[["Tell the agency you want vegetarian or fish meals","v",""]],
+ spa:[["Ceviche (fish comes up from the coast)","f",""],["Quinoa and chañar dishes","v",""],["Pastel de choclo, vegetarian (ask)","v",""],["Cheese empanadas","v","gm"]],
+ bus:[["Ceviche","f",""],["Pescado frito","f","g"],["Machas and jaiba (razor clams, crab)","f",""],["Azapa olives","v",""]],
+ aqp:[["Chupe de camarones (river-shrimp chowder)","f","m"],["Camarones al ajo","f",""],["Solterito (broad-bean and cheese salad)","v","m"],["Rocoto relleno, vegetarian (ask)","v","m"],["Pastel de papa","v","m"],["Queso helado","v","m"]],
+ colca:[["River trout","f",""],["Quinoa soup","v",""],["Andean potatoes and choclo","v",""]],
+ cus:[["Trucha frita or ceviche de trucha","f",""],["Quinoa soup","v",""],["Choclo con queso","v","m"],["Solterito","v","m"],["Plenty of vegetarian restaurants around San Blas","v",""]],
+ sal:[["Tell the agency: vegetarian or fish meals on the trek","v",""]],
+ sv:[["Urubamba trout","f",""],["Valley vegetables and quinoa","v",""],["Choclo con queso","v","m"]],
+ par:[["Ceviche and leche de tigre","f",""],["Tiradito","f",""],["Choritos a la chalaca (mussels)","f",""],["Conchitas a la parmesana (scallops)","f","m"],["Chicharrón de pescado or calamar","f","g"],["Pescado a lo macho (seafood sauce)","f","m"]],
+ lim:[["Ceviche, at lunch (cevicherías close in the afternoon)","f",""],["Tiradito","f",""],["Causa with crab or octopus","f",""],["Pulpo al olivo (octopus)","f",""],["Arroz con mariscos","f",""],["Jalea (fried seafood platter)","f","g"],["Nikkei (Japanese-Peruvian) cooking","f","g"],["Causa vegetariana","v",""],["Tacu tacu (rice and beans)","v",""],["Papa a la huancaína","v","gm"]]
+};
+const picksFor=id=>PICKS[INFO_ALIAS[id]||id]||null;

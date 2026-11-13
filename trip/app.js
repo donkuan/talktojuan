@@ -155,7 +155,10 @@ function aboutBlock(id){const x=infoFor(id);if(!x)return null;
   const foods=el("div",{class:"foods"},x.eat.map(([n,f])=>el("span",{class:"food"},n,f.includes("g")?el("span",{class:"fl",title:"Usually contains gluten (wheat/barley)",text:"G"}):null,f.includes("m")?el("span",{class:"fl",title:"Usually contains cow's milk",text:"M"}):null)));
   return el("div",{class:"about"},el("p",{class:"hist",text:x.h}),
     el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Most popular"}),el("div",{class:"seeline",text:x.see.join(" · ")})),
-    el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Eat & drink"}),foods,el("div",{class:"muted",style:"font-size:12px;margin-top:4px",text:"G = usually has gluten (wheat/barley), M = usually has cow's milk. Recipes vary: ask."})))}
+    el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Eat & drink"}),foods),
+    picksFor(id)?el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Fish, seafood & vegetarian picks"}),
+      el("div",{class:"foods"},picksFor(id).map(([n,t,f])=>el("span",{class:"food "+(t==="f"?"fish":"veg")},el("span",{class:"kind",text:t==="f"?"🐟":"🌱","aria-label":t==="f"?"Fish or seafood":"Vegetarian"}),n,f.includes("g")?el("span",{class:"fl",title:"Usually contains gluten (wheat/barley)",text:"G"}):null,f.includes("m")?el("span",{class:"fl",title:"Usually contains cow's milk",text:"M"}):null)))):null,
+    el("div",{},el("div",{class:"muted",style:"font-size:12px;margin-top:4px",text:"G = usually has gluten (wheat/barley), M = usually has cow's milk. Recipes vary: ask."})))}
 function renderStops(){
   const w=$("#stops");w.innerHTML="";
   for(const s of STOPS){
