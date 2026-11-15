@@ -366,8 +366,14 @@ async function openFile(f){
 
 /* ---------- packing ---------- */
 /* Each person's own packing list: the default sections minus what they removed, plus their own sections and items. */
+const PERSON_HIDE={"d140b85851061591527577d140031a77c0b567edfe7ecdc9a52e26590078adb6":["Surf","Wayra race kit (mandatory)","Wayra first-aid kit (mandatory contents)","Wayra race kit (recommended)"]};
+async function emailHash(e){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(e||"").trim().toLowerCase()));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(x){return""}}
+/* first time a person opens their list, hide the sections that don't apply to them (they can restore them) */
+async function seedMine(fromCache){if(!S.user||S.mine.seeded||fromCache)return;const h=await emailHash(S.user.email);const cats=PERSON_HIDE[h];
+  if(!cats){S.mine={...S.mine,seeded:true};writeMine();return}
+  const hc={...S.mine.hiddenCats};for(const c of cats)hc[c]=true;S.mine={...S.mine,hiddenCats:hc,seeded:true};writeMine();if(S.tab==="packing")renderPacking()}
 const EMPTY_MINE=()=>({checked:{},custom:[],hidden:{},hiddenCats:{},cats:[]});
-const normMine=d=>({checked:{...(d&&d.checked||{})},custom:[...(d&&d.custom||[])],hidden:{...(d&&d.hidden||{})},hiddenCats:{...(d&&d.hiddenCats||{})},cats:[...(d&&d.cats||[])]});
+const normMine=d=>({seeded:!!(d&&d.seeded),checked:{...(d&&d.checked||{})},custom:[...(d&&d.custom||[])],hidden:{...(d&&d.hidden||{})},hiddenCats:{...(d&&d.hiddenCats||{})},cats:[...(d&&d.cats||[])]});
 function packSections(){const m=S.mine;const out=[];
   PACK.forEach(([cat,items],ci)=>{if(m.hiddenCats[cat])return;
     out.push({key:cat,name:cat,own:false,items:[...items.map(t=>({key:ci+":"+slug(t),t})).filter(i=>!m.hidden[i.key]),...m.custom.filter(c=>c.cat===cat).map(c=>({key:"c:"+c.id,t:c.t,custom:c.id}))]})});
@@ -404,7 +410,7 @@ function renderPacking(){
   }
   const pct=tot?Math.round(done/tot*100):0;
   $("#packpct").textContent=`${done}/${tot} packed${signedIn?"":" · on this phone only"}`;$("#packbar").style.width=pct+"%";
-  const eb=$("#packEdit");if(eb){eb.textContent=ed?"Done":"Edit list";eb.setAttribute("aria-pressed",String(ed))}
+  const eb=$("#packEdit");if(eb){eb.textContent=ed?"Done":"Edit list";eb.setAttribute("aria-pressed",String(ed));eb.onclick=()=>{S.packEdit=!S.packEdit;S.confirmSec=null;renderPacking()}}
 }
 const mineKey=()=>"mine:"+(S.user?S.user.uid:"guest");
 function writeMine(){store.set(mineKey(),S.mine);if(S.be&&S.user)track(S.be.writeMine(S.user.uid,normMine(S.mine)),"Couldn't save your packing list.")}
@@ -654,7 +660,6 @@ async function downloadOffline(btn){
 function render(){renderHeader();renderTabs();
   if(S.tab==="map")renderMap();if(S.tab==="calendar")renderCalendar();if(S.tab==="stops")renderStops();if(S.tab==="bookings")renderBookings();
   if(S.tab==="packing")renderPacking();if(S.tab==="ahead")renderWarns();if(S.tab==="account")renderAccount();}
-$("#packEdit").addEventListener("click",()=>{S.packEdit=!S.packEdit;S.confirmSec=null;renderPacking()});
 $("#addBk").addEventListener("click",()=>{S.editing={kind:"flight",status:"todo",date:S.sel};renderBookings();$("#bk-title")?.focus()});
 for(const b of document.querySelectorAll("#bkfilter button"))b.addEventListener("click",()=>{S.bkFilter=b.dataset.f;renderBookings()});
 addEventListener("online",()=>{renderSync();syncFiles()});addEventListener("offline",renderSync);
@@ -672,7 +677,7 @@ function onUser(u){
   unsub.push(S.be.watchBookings((rows,m)=>{S.bookings=new Map(rows);S.loaded=true;S.pending=m.pending;store.set("snap:bookings",rows);
     if(!S.editing)render();else{renderHeader();renderTabs()}syncFiles()},denied));
   unsub.push(S.be.watchShared((d)=>{S.shared={picks:{...(d.picks||{})},warns:{...(d.warns||{})},days:{...(d.days||{})}};store.set("snap:shared",S.shared);if(!S.editDay&&!S.editing)render()},denied));
-  unsub.push(S.be.watchMine(u.uid,d=>{if(d){S.mine=normMine(d);store.set(mineKey(),S.mine)}else{const g=store.get("mine:guest",null);if(g&&(Object.keys(g.checked||{}).length||(g.custom||[]).length||(g.cats||[]).length)){S.mine=normMine(g);writeMine()}}if(S.tab==="packing")renderPacking()},()=>{}));
+  unsub.push(S.be.watchMine(u.uid,(d,meta)=>{if(d){S.mine=normMine(d);store.set(mineKey(),S.mine)}else{const g=store.get("mine:guest",null);if(g&&(Object.keys(g.checked||{}).length||(g.custom||[]).length||(g.cats||[]).length)){S.mine=normMine(g);writeMine()}}seedMine(meta&&meta.fromCache);if(S.tab==="packing")renderPacking()},()=>{}));
   render();
 }
 (async()=>{

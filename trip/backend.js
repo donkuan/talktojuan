@@ -28,7 +28,7 @@ window.TRIP_makeBackend = async function(cfg){
     watchBookings(cb, onErr){ return F.onSnapshot(bookings(), {includeMetadataChanges: true},
       s => cb(s.docs.map(d => [d.id, d.data()]), meta(s)), onErr); },
     watchShared(cb, onErr){ return F.onSnapshot(stateDoc(), s => cb(s.exists() ? s.data() : {}, meta(s)), onErr); },
-    watchMine(uid, cb, onErr){ return F.onSnapshot(mineDoc(uid), s => cb(s.exists() ? s.data() : null), onErr); },
+    watchMine(uid, cb, onErr){ return F.onSnapshot(mineDoc(uid), s => cb(s.exists() ? s.data() : null, meta(s)), onErr); },
     /* Writes resolve when the server confirms. Offline they stay queued on the phone and the promise waits. */
     addBooking(data){ const ref = F.doc(bookings()); return {id: ref.id, done: F.setDoc(ref, data)}; },
     setBooking(id, data){ return F.setDoc(F.doc(bookings(), id), data, {merge: true}); },
