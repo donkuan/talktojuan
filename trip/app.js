@@ -27,7 +27,7 @@ const S={tab:store.get("tab","calendar"),sel:store.get("sel",START),
   mine:{checked:{},custom:[]},be:null,user:null,denied:false,loaded:false,pending:false,
   uploading:new Set(),cached:new Set(),downloading:null,confirmFile:null,
   bkFilter:"all",editing:null,confirmDel:null,confirmMerge:null,editDay:false,mapView:"all",mapSel:null,
-  auth:{mode:"in",name:"",email:"",err:"",busy:false},importing:null};
+  packEdit:false,confirmSec:null,auth:{mode:"in",name:"",email:"",err:"",busy:false},importing:null};
 const today=iso(new Date());
 if(today>=START&&today<=END)S.sel=today;
 const canWrite=()=>!!(S.be&&S.user&&!S.denied);
@@ -365,31 +365,62 @@ async function openFile(f){
 }
 
 /* ---------- packing ---------- */
+/* Each person's own packing list: the default sections minus what they removed, plus their own sections and items. */
+const EMPTY_MINE=()=>({checked:{},custom:[],hidden:{},hiddenCats:{},cats:[]});
+const normMine=d=>({checked:{...(d&&d.checked||{})},custom:[...(d&&d.custom||[])],hidden:{...(d&&d.hidden||{})},hiddenCats:{...(d&&d.hiddenCats||{})},cats:[...(d&&d.cats||[])]});
+function packSections(){const m=S.mine;const out=[];
+  PACK.forEach(([cat,items],ci)=>{if(m.hiddenCats[cat])return;
+    out.push({key:cat,name:cat,own:false,items:[...items.map(t=>({key:ci+":"+slug(t),t})).filter(i=>!m.hidden[i.key]),...m.custom.filter(c=>c.cat===cat).map(c=>({key:"c:"+c.id,t:c.t,custom:c.id}))]})});
+  for(const c of m.cats)out.push({key:"u:"+c.id,name:c.name,own:true,id:c.id,items:m.custom.filter(x=>x.cat==="u:"+c.id).map(x=>({key:"c:"+x.id,t:x.t,custom:x.id}))});
+  return out}
 function renderPacking(){
-  const w=$("#pack");w.innerHTML="";let tot=0,done=0;
+  const w=$("#pack");w.innerHTML="";let tot=0,done=0;const m=S.mine;const ed=!!S.packEdit;
   const signedIn=!!S.user;
-  PACK.forEach(([cat,items],ci)=>{
-    const custom=(S.mine.custom||[]).filter(c=>c.cat===cat);
-    const all=[...items.map(t=>({key:ci+":"+slug(t),t})),...custom.map(c=>({key:"c:"+c.id,t:c.t,custom:c.id}))];
-    const c=all.filter(i=>S.mine.checked[i.key]).length;tot+=all.length;done+=c;
-    const sec=el("section",{},el("h3",{},cat,el("span",{text:`${c}/${all.length}`})));
-    for(const i of all){
-      const on=!!S.mine.checked[i.key];const id="p-"+i.key.replace(/[^a-z0-9]/gi,"_");
-      sec.append(el("label",{class:"ck"+(on?" done":""),for:id},el("input",{type:"checkbox",id,checked:on,onchange:e=>toggleCheck(i.key,e.target.checked)}),el("span",{text:i.t}),
-        i.custom?el("button",{class:"x",type:"button","aria-label":"Remove "+i.t,onclick:e=>{e.preventDefault();removeCustom(i.custom,i.key)}},"✕"):null));
+  packSections().forEach((sec,si)=>{
+    const c=sec.items.filter(i=>m.checked[i.key]).length;tot+=sec.items.length;done+=c;
+    const head=el("h3",{},sec.name,el("span",{text:`${c}/${sec.items.length}`}));
+    const box=el("section",{},head);
+    if(ed){box.append(S.confirmSec===sec.key
+      ?el("div",{class:"confirm",style:"margin:-2px 0 6px"},`Remove “${sec.name}”${sec.own?" and its items":""}?`,el("button",{class:"btn sm danger",type:"button",onclick:()=>removeSection(sec)},"Remove"),el("button",{class:"btn sm",type:"button",onclick:()=>{S.confirmSec=null;renderPacking()}},"Keep"))
+      :el("button",{class:"btn sm",type:"button",style:"margin:-2px 0 6px","aria-label":"Remove section "+sec.name,onclick:()=>{S.confirmSec=sec.key;renderPacking()}},"Remove section"))}
+    for(const i of sec.items){
+      const on=!!m.checked[i.key];const id="p-"+i.key.replace(/[^a-z0-9]/gi,"_");
+      box.append(el("label",{class:"ck"+(on?" done":""),for:id},el("input",{type:"checkbox",id,checked:on,onchange:e=>toggleCheck(i.key,e.target.checked)}),el("span",{text:i.t}),
+        (ed||i.custom)?el("button",{class:"x",type:"button","aria-label":"Remove "+i.t,onclick:e=>{e.preventDefault();removeItem(i)}},"✕"):null));
     }
-    const inp=el("input",{id:"add-"+ci,placeholder:"Add your own item","aria-label":"Add item to "+cat});
-    sec.append(el("form",{class:"addrow",onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v){addCustom(cat,v);inp.value=""}}},inp,el("button",{class:"btn sm",type:"submit"},"Add")));
-    w.append(sec);
+    if(!sec.items.length)box.append(el("p",{class:"muted",style:"margin:4px 0;font-size:13px",text:"No items yet."}));
+    const inp=el("input",{id:"add-"+si,placeholder:"Add an item","aria-label":"Add item to "+sec.name});
+    box.append(el("form",{class:"addrow",onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v){addCustom(sec.key,v,si);inp.value=""}}},inp,el("button",{class:"btn sm",type:"submit"},"Add")));
+    w.append(box);
   });
+  if(ed){
+    const inp=el("input",{id:"add-sec",placeholder:"e.g. Climbing gear","aria-label":"New section name"});
+    const rm=[...PACK.filter(([cat])=>m.hiddenCats[cat]).map(([cat])=>cat)];const nItems=Object.keys(m.hidden).length;
+    w.append(el("section",{},el("h3",{text:"New section"}),
+      el("form",{class:"addrow",onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v){addSection(v);inp.value=""}}},inp,el("button",{class:"btn sm",type:"submit"},"Add section")),
+      (rm.length||nItems)?el("div",{style:"margin-top:12px;display:grid;gap:6px"},el("div",{class:"eyebrow",text:"Removed from the standard list"}),
+        ...rm.map(cat=>el("div",{class:"confirm"},el("span",{text:cat}),el("button",{class:"btn sm",type:"button",onclick:()=>restoreSection(cat)},"Restore"))),
+        nItems?el("div",{class:"confirm"},el("span",{text:`${nItems} single item${nItems>1?"s":""}`}),el("button",{class:"btn sm",type:"button",onclick:restoreItems},"Restore all")):null):null));
+  }
   const pct=tot?Math.round(done/tot*100):0;
   $("#packpct").textContent=`${done}/${tot} packed${signedIn?"":" · on this phone only"}`;$("#packbar").style.width=pct+"%";
+  const eb=$("#packEdit");if(eb){eb.textContent=ed?"Done":"Edit list";eb.setAttribute("aria-pressed",String(ed))}
 }
 const mineKey=()=>"mine:"+(S.user?S.user.uid:"guest");
-function writeMine(){store.set(mineKey(),S.mine);if(S.be&&S.user)track(S.be.writeMine(S.user.uid,{checked:S.mine.checked,custom:S.mine.custom||[]}),"Couldn't save your packing list.")}
-function toggleCheck(k,v){const c={...S.mine.checked};if(v)c[k]=true;else delete c[k];S.mine={...S.mine,checked:c};renderPacking();writeMine()}
-function addCustom(cat,t){S.mine={...S.mine,custom:[...(S.mine.custom||[]),{id:rid(),cat,t}]};renderPacking();writeMine();document.getElementById("add-"+PACK.findIndex(p=>p[0]===cat))?.focus()}
-function removeCustom(id,key){const c={...S.mine.checked};delete c[key];S.mine={checked:c,custom:(S.mine.custom||[]).filter(x=>x.id!==id)};renderPacking();writeMine()}
+function writeMine(){store.set(mineKey(),S.mine);if(S.be&&S.user)track(S.be.writeMine(S.user.uid,normMine(S.mine)),"Couldn't save your packing list.")}
+function setMine(patch){S.mine={...S.mine,...patch};renderPacking();writeMine()}
+function toggleCheck(k,v){const c={...S.mine.checked};if(v)c[k]=true;else delete c[k];setMine({checked:c})}
+function addCustom(cat,t,si){setMine({custom:[...S.mine.custom,{id:rid(),cat,t}]});document.getElementById("add-"+si)?.focus()}
+function removeItem(i){const c={...S.mine.checked};delete c[i.key];
+  if(i.custom)setMine({checked:c,custom:S.mine.custom.filter(x=>x.id!==i.custom)});
+  else setMine({checked:c,hidden:{...S.mine.hidden,[i.key]:true}})}
+function removeSection(sec){S.confirmSec=null;
+  if(sec.own){const keys=new Set(sec.items.map(i=>i.key));const c=Object.fromEntries(Object.entries(S.mine.checked).filter(([k])=>!keys.has(k)));
+    setMine({checked:c,cats:S.mine.cats.filter(x=>x.id!==sec.id),custom:S.mine.custom.filter(x=>x.cat!==sec.key)})}
+  else setMine({hiddenCats:{...S.mine.hiddenCats,[sec.key]:true}});toast("Section removed")}
+function addSection(name){setMine({cats:[...S.mine.cats,{id:rid(),name}]});document.getElementById("add-"+(packSections().length-1))?.focus()}
+function restoreSection(cat){const h={...S.mine.hiddenCats};delete h[cat];setMine({hiddenCats:h})}
+function restoreItems(){setMine({hidden:{}})}
 
 /* ---------- plan ahead ---------- */
 function renderWarns(){
@@ -594,10 +625,9 @@ async function buildOffline(progress){
     if(ds===s.from){const picks=s.acts.filter(a=>S.shared.picks?.[s.id+":"+slug(a[0])]);const list=picks.length?picks:s.acts;
       text((picks.length?"Starred ideas: ":"Ideas: ")+list.map(a=>a[0]).join(" · "),{sz:8.5,c:mute})}}
   newPage();text("Packing list",{f:B,sz:18});y-=4;
-  PACK.forEach(([cat,items],ci)=>{const custom=(S.mine.custom||[]).filter(c=>c.cat===cat);
-    const rows=[...items.map(t=>({key:ci+":"+slug(t),t})),...custom.map(c=>({key:"c:"+c.id,t:c.t}))];
-    need(40);y-=4;text(cat,{f:B,sz:11});
-    for(const r of rows)text(`${S.mine.checked[r.key]?"[x]":"[  ]"}  ${r.t}`,{sz:9.5,x:M+6,w:LW-6,gap:2})});
+  for(const sec of packSections()){
+    need(40);y-=4;text(sec.name,{f:B,sz:11});
+    for(const r of sec.items)text(`${S.mine.checked[r.key]?"[x]":"[  ]"}  ${r.t}`,{sz:9.5,x:M+6,w:LW-6,gap:2})}
   if(tickets.length){newPage();text("Tickets",{f:B,sz:18});y-=4;
     let pn=out.getPageCount()+1;
     for(const t of tickets){text(`${t.label}   ${t.f.name||"Ticket"}   ·   ${t.b.title||""}${t.b.date?" ("+fmt(t.b.date)+")":""}   ${t.err?"COULD NOT BE INCLUDED - open it in the app":"page "+pn}`,{sz:10,c:t.err?acc:ink});pn+=t.n}}
@@ -624,24 +654,25 @@ async function downloadOffline(btn){
 function render(){renderHeader();renderTabs();
   if(S.tab==="map")renderMap();if(S.tab==="calendar")renderCalendar();if(S.tab==="stops")renderStops();if(S.tab==="bookings")renderBookings();
   if(S.tab==="packing")renderPacking();if(S.tab==="ahead")renderWarns();if(S.tab==="account")renderAccount();}
+$("#packEdit").addEventListener("click",()=>{S.packEdit=!S.packEdit;S.confirmSec=null;renderPacking()});
 $("#addBk").addEventListener("click",()=>{S.editing={kind:"flight",status:"todo",date:S.sel};renderBookings();$("#bk-title")?.focus()});
 for(const b of document.querySelectorAll("#bkfilter button"))b.addEventListener("click",()=>{S.bkFilter=b.dataset.f;renderBookings()});
 addEventListener("online",()=>{renderSync();syncFiles()});addEventListener("offline",renderSync);
 if(!TABS.some(t=>t[0]===S.tab))S.tab="calendar";
-S.mine=store.get(mineKey(),{checked:{},custom:[]});
+S.mine=normMine(store.get(mineKey(),null));
 render();refreshCached().then(render);
 
 /* ---------- connect ---------- */
 let unsub=[];
 function onUser(u){
   unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];S.user=u;S.denied=false;S.auth.err="";
-  if(!u){S.bookings=new Map();S.shared={picks:{},warns:{},days:{}};S.loaded=true;store.set("snap:bookings",[]);store.set("snap:shared",{});S.mine=store.get(mineKey(),{checked:{},custom:[]});status("");render();return}
-  S.mine=store.get(mineKey(),{checked:{},custom:[]});
+  if(!u){S.bookings=new Map();S.shared={picks:{},warns:{},days:{}};S.loaded=true;store.set("snap:bookings",[]);store.set("snap:shared",{});S.mine=normMine(store.get(mineKey(),null));status("");render();return}
+  S.mine=normMine(store.get(mineKey(),null));
   const denied=e=>{if(e&&e.code==="permission-denied"){S.denied=true;status(S.be.errorText(e))}render()};
   unsub.push(S.be.watchBookings((rows,m)=>{S.bookings=new Map(rows);S.loaded=true;S.pending=m.pending;store.set("snap:bookings",rows);
     if(!S.editing)render();else{renderHeader();renderTabs()}syncFiles()},denied));
   unsub.push(S.be.watchShared((d)=>{S.shared={picks:{...(d.picks||{})},warns:{...(d.warns||{})},days:{...(d.days||{})}};store.set("snap:shared",S.shared);if(!S.editDay&&!S.editing)render()},denied));
-  unsub.push(S.be.watchMine(u.uid,d=>{if(d){S.mine={checked:{...(d.checked||{})},custom:[...(d.custom||[])]};store.set(mineKey(),S.mine)}else{const g=store.get("mine:guest",null);if(g&&Object.keys(g.checked||{}).length){S.mine=g;writeMine()}}if(S.tab==="packing")renderPacking()},()=>{}));
+  unsub.push(S.be.watchMine(u.uid,d=>{if(d){S.mine=normMine(d);store.set(mineKey(),S.mine)}else{const g=store.get("mine:guest",null);if(g&&(Object.keys(g.checked||{}).length||(g.custom||[]).length||(g.cats||[]).length)){S.mine=normMine(g);writeMine()}}if(S.tab==="packing")renderPacking()},()=>{}));
   render();
 }
 (async()=>{
