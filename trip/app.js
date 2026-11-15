@@ -366,14 +366,29 @@ async function openFile(f){
 
 /* ---------- packing ---------- */
 /* Each person's own packing list: the default sections minus what they removed, plus their own sections and items. */
-const PERSON_HIDE={"d140b85851061591527577d140031a77c0b567edfe7ecdc9a52e26590078adb6":["Surf","Wayra race kit (mandatory)","Wayra first-aid kit (mandatory contents)","Wayra race kit (recommended)"]};
+/* Starting list per person, matched on a SHA-256 hash of the sign-in email (no addresses in this public code).
+   Applied once per SEED_V; everything stays editable and restorable in the app. */
+const SEED_V=2;
+const PERSONS={"d140b85851061591527577d140031a77c0b567edfe7ecdc9a52e26590078adb6":{
+  hideCats:["Surf","Wayra race kit (mandatory)","Wayra first-aid kit (mandatory contents)","Wayra race kit (recommended)","Running, racing, cycling"],
+  hideItems:[["Documents and money","Doctor-signed fitness certificate (apto físico) for Wayra"],["Footwear","Trail running shoes with grip"],["Footwear","Road running shoes (optional)"],
+    ["Clothing","2–3 T-shirts / running tops"],["Clothing","Running shorts + casual shorts"],["Hiking gear","Tent + pegs for the W trek campsites (or rent in Puerto Natales)"]],
+  add:{"Clothing":["2–3 T-shirts / tops","Shorts or a skirt","2 sports bras + comfortable everyday bras","Leggings for buses and refugios","Light scarf or pashmina (sun, dust, churches)"],
+    "Health":["Personal contraception for 7 weeks (carry-on)","Period pain relief"],
+    "Toiletries and small stuff":["Small crossbody bag with a zip for cities"]},
+  addCats:[["Make-up & personal care",["Make-up basics (mascara, concealer, tinted SPF moisturiser)","Make-up remover / micellar water + cotton pads","Face moisturiser + rich night cream (wind and altitude dry the skin)","Hair conditioner, brush, hair ties and clips","Dry shampoo (treks and cold refugios)","Menstrual cup or tampons/pads for 7 weeks (little choice in Patagonia and Bolivia)","Tweezers, nail file, small mirror","Deodorant","Small perfume or solid perfume"]]]}};
 async function emailHash(e){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(String(e||"").trim().toLowerCase()));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(x){return""}}
-/* first time a person opens their list, hide the sections that don't apply to them (they can restore them) */
-async function seedMine(fromCache){if(!S.user||S.mine.seeded||fromCache)return;const h=await emailHash(S.user.email);const cats=PERSON_HIDE[h];
-  if(!cats){S.mine={...S.mine,seeded:true};writeMine();return}
-  const hc={...S.mine.hiddenCats};for(const c of cats)hc[c]=true;S.mine={...S.mine,hiddenCats:hc,seeded:true};writeMine();if(S.tab==="packing")renderPacking()}
+async function seedMine(fromCache){if(!S.user||fromCache||S.mine.seeded>=SEED_V)return;const P=PERSONS[await emailHash(S.user.email)];
+  if(!P||S.mine.seeded>=SEED_V){S.mine={...S.mine,seeded:SEED_V};writeMine();return}
+  const m=normMine(S.mine);
+  for(const c of P.hideCats)m.hiddenCats[c]=true;
+  for(const[cat,t]of P.hideItems){const ci=PACK.findIndex(p=>p[0]===cat);if(ci>=0){const k=ci+":"+slug(t);m.hidden[k]=true;delete m.checked[k]}}
+  const has=(cat,t)=>m.custom.some(x=>x.cat===cat&&x.t===t);
+  for(const[cat,ts]of Object.entries(P.add))for(const t of ts)if(!has(cat,t))m.custom.push({id:rid(),cat,t});
+  for(const[name,ts]of P.addCats){let c=m.cats.find(x=>x.name===name);if(!c){c={id:rid(),name};m.cats.push(c)}for(const t of ts)if(!has("u:"+c.id,t))m.custom.push({id:rid(),cat:"u:"+c.id,t})}
+  m.seeded=SEED_V;S.mine=m;writeMine();if(S.tab==="packing")renderPacking()}
 const EMPTY_MINE=()=>({checked:{},custom:[],hidden:{},hiddenCats:{},cats:[]});
-const normMine=d=>({seeded:!!(d&&d.seeded),checked:{...(d&&d.checked||{})},custom:[...(d&&d.custom||[])],hidden:{...(d&&d.hidden||{})},hiddenCats:{...(d&&d.hiddenCats||{})},cats:[...(d&&d.cats||[])]});
+const normMine=d=>({seeded:d&&d.seeded===true?1:(d&&d.seeded)||0,checked:{...(d&&d.checked||{})},custom:[...(d&&d.custom||[])],hidden:{...(d&&d.hidden||{})},hiddenCats:{...(d&&d.hiddenCats||{})},cats:[...(d&&d.cats||[])]});
 function packSections(){const m=S.mine;const out=[];
   PACK.forEach(([cat,items],ci)=>{if(m.hiddenCats[cat])return;
     out.push({key:cat,name:cat,own:false,items:[...items.map(t=>({key:ci+":"+slug(t),t})).filter(i=>!m.hidden[i.key]),...m.custom.filter(c=>c.cat===cat).map(c=>({key:"c:"+c.id,t:c.t,custom:c.id}))]})});
