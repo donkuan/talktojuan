@@ -98,7 +98,8 @@ const WARNS=[
  {id:"w-tasting",sev:"med",by:"2026-11-20",t:"Reserve a Lima tasting menu",d:"Central, Maido and Kjolle fill months ahead."},
  {id:"w-wayra",sev:"med",by:"2026-11-30",t:"Enter Desafío Wayra (Sun 13 Dec)",d:"8K, 15K or 25K. Entries close 10 Dec on ticketsati.com/event/desafio_wayra. Mandatory kit is in the packing list."},
  {id:"w-apto",sev:"med",by:"2026-11-19",t:"Get a signed fitness certificate before you fly",d:"Argentine races often ask for an apto físico signed by a doctor."},
- {id:"w-bolivia",sev:"med",by:"2026-12-15",t:"Bolivia: cash and news check",d:"Bring enough USD cash for Tupiza, Uyuni and the tour; cards rarely work. Check the news for fuel shortages and road blockades (bloqueos) the week before. Check the entry rules for Dutch passports."},
+ {id:"w-chalten-cash",sev:"high",by:"2026-11-24",t:"Get pesos for El Chaltén in El Calafate",d:"Before you cross to Chile on 24 Nov. El Chaltén's few ATMs run dry in season and many places take cash only. Take enough for 4–5 days for both of you."},
+ {id:"w-bolivia",sev:"med",by:"2026-12-15",t:"Bolivia: cash and news check",d:"Bring enough cash for Tupiza, Uyuni and the tour: bolivianos for park fees (Bs 150 + 30 + 6 pp, plus ~Bs 350 pp extras) and USD if the operator wants the balance in dollars. Check the news for fuel shortages and road blockades (bloqueos) the week before. Check the entry rules for Dutch passports."},
  {id:"w-buses",sev:"med",by:"2026-12-15",t:"Book the 27 Dec night bus to Arica",d:"Holiday week; buy ahead in San Pedro or online."},
  {id:"w-alt",sev:"med",by:"2026-11-19",t:"Altitude plan for Bolivia, Colca and Cusco",d:"The jeep tour sleeps at ~4,300 m and reaches ~4,900 m; decide on acetazolamide; keep New Year's Eve light at 3,400 m; the Salkantay pass is ~4,600 m."},
  {id:"w-ins",sev:"med",by:"2026-11-19",t:"Check insurance cover",d:"Trekking up to 5,000 m, mountain biking and trail racing."},
@@ -251,3 +252,50 @@ const PICKS={
  lim:[["Ceviche, at lunch (cevicherías close in the afternoon)","f",""],["Tiradito","f",""],["Causa with crab or octopus","f",""],["Pulpo al olivo (octopus)","f",""],["Arroz con mariscos","f",""],["Jalea (fried seafood platter)","f","g"],["Nikkei (Japanese-Peruvian) cooking","f","g"],["Causa vegetariana","v",""],["Tacu tacu (rice and beans)","v",""],["Papa a la huancaína","v","gm"]]
 };
 const picksFor=id=>PICKS[INFO_ALIAS[id]||id]||null;
+
+/* Where to get cash before each stop. k: "stock" = get cash BEFORE arriving, "some" = cash needed, ATMs there but unreliable, "card" = cards fine, little cash needed */
+const CASH={
+ ba:{k:"card",t:"Cards work almost everywhere (foreign Visa/Mastercard get the MEP rate). For pesos use Western Union (send to yourself in the app, collect at a branch) rather than ATMs, which charge high fees. Some restaurants give 10–20% off for cash."},
+ cal:{k:"stock",t:"Last good place for pesos before El Chaltén (30 Nov). Withdraw or collect Western Union cash here for 4–5 days in El Chaltén for both of you, before crossing to Chile on 24 Nov."},
+ pn1:{k:"some",t:"Withdraw some Chilean pesos (ATMs in town) for tips, snacks and showers on the W. Most refugios take cards. In Chilean hotels, paying with a foreign card can avoid the 19% VAT: ask."},
+ w:{k:"some",t:"Refugios mostly take cards; carry Chilean pesos for tips, snacks and showers. No ATMs on the trek."},
+ pn2:{k:"card",t:"Keep leftover Chilean pesos for San Pedro de Atacama (25 Dec). Only change them into Argentine pesos if you are short for El Chaltén."},
+ cha:{k:"stock",t:"Bring all your cash from El Calafate. The ATMs at the bus station are often empty in high season, and many hotels, bars and restaurants take cash only. Card payments can fail when the internet is down."},
+ ush:{k:"card",t:"Cards accepted almost everywhere; ATMs and exchange offices in town. Top up pesos here only if you need them."},
+ bar1:{k:"stock",t:"Get pesos in Bariloche on 8 Dec for the hut-to-hut trek AND El Bolsón: Refugio Frey takes cash only at the hut (about ARS 49,000 per night last Dec, plus meals); expect the same at Jakob."},
+ bol:{k:"some",t:"The market and small places mostly take cash. El Bolsón has ATMs, but they get queues around race weekend: bring pesos from Bariloche."},
+ bar:{k:"card",t:"Cards fine. Withdraw pesos for Tilcara and Purmamarca here or in Jujuy city on arrival (17 Dec)."},
+ til:{k:"some",t:"Tilcara has Link and Banelco ATMs in the centre; Purmamarca has one ATM on the main square, which can run dry. Get pesos in Jujuy city on arrival. Spend your last pesos before Bolivia, or change them into bolivianos at the exchange offices in Villazón, just across the border."},
+ tup:{k:"stock",t:"Get bolivianos at the Villazón border or in Tupiza. Have everything for Bolivia before the tour: the tour balance (some operators want USD cash), park fees (Eduardo Avaroa Bs 150, Incahuasi Bs 30, Polques Bs 6 per person) and about Bs 350 per person for extras. Bolivia's Enlace ATMs can dispense USD or bolivianos."},
+ uyu:{k:"stock",t:"Uyuni has few ATMs and they are unreliable. Arrive with the cash for park fees and extras. Spend your last bolivianos before Chile: they are almost impossible to change later."},
+ jeep:{k:"stock",t:"No ATMs or cards for 3 days. Cash bolivianos for park fees, toilets, water and snacks."},
+ spa:{k:"some",t:"Tours and most restaurants take cards. Few ATMs, which can be empty after Christmas: use your leftover Chilean pesos from Puerto Natales."},
+ bus:{k:"some",t:"Change leftover Chilean pesos into soles at exchange offices in the Arica bus terminal or in Tacna."},
+ aqp:{k:"stock",t:"Plenty of ATMs. Withdraw soles for the Colca valley: the Colca tourist ticket and small things in Chivay are cash, and Chivay has few ATMs."},
+ colca:{k:"some",t:"Pay the Colca tourist ticket and village extras in cash soles."},
+ aqp2:{k:"card",t:"Cards and ATMs fine."},
+ cus:{k:"stock",t:"Withdraw soles for the Salkantay trek: tips for guide, cook and muleteers, snacks and drinks on the way, and anything left to pay on Machu Picchu day."},
+ sal:{k:"stock",t:"No ATMs until Aguas Calientes. Carry cash soles for tips and extras."},
+ sv:{k:"card",t:"Ollantaytambo has ATMs; cards in most restaurants."},
+ par:{k:"card",t:"Cards fine in most places; small cash for the Ballestas port fee and tips."},
+ lim:{k:"card",t:"Cards and ATMs everywhere."}
+};
+
+/* Which of our cards to use and what they cost outside the eurozone (check the apps: fees change). */
+const MONEY={
+ cards:[
+  ["N26 (debit Mastercard)","Payments: no fee, Mastercard rate. Cash: 1.7% per withdrawal in a foreign currency.","Everyday card payments"],
+  ["Openbank Open Debit + Travel+","Travel+ costs about €4.99/month and can be switched off any time. With it: payments in any currency without an Openbank fee, plus a few free ATM withdrawals a month worldwide (Openbank Spain says 2, a Dutch guide says 5: check the app). Without Travel+, withdrawals outside the EU cost 4.5%.","Cash withdrawals (use the free ones first), also fine for payments"],
+  ["ASN debit card","€0.30 per payment and €4.00 per withdrawal, but no exchange-rate markup. Switch on worldwide use in the app.","Big payments (hostel, tour) and large withdrawals"],
+  ["ING credit card","Roughly 2% markup on non-euro payments (check the ING app). Never withdraw cash with it.","Backup, car rental and hotel deposits, flights"]
+ ],
+ tips:[
+  "Always pay and withdraw in the local currency; refuse conversion to euros.",
+  "Local ATMs add their own fee on top (high in Argentina and Chile): withdraw fewer, larger amounts.",
+  "Argentina: card payments get the MEP rate. Western Union (send to yourself, collect at a branch) is the cheapest way to get pesos.",
+  "Bolivia floated its currency in June 2026: ATMs and exchange offices now give about the same rate.",
+  "Each carry two cards in different bags, plus about USD 300–500 in clean notes for emergencies.",
+  "Ask ATMs for small notes when you can; remote places often can't change big ones."
+ ]
+};
+

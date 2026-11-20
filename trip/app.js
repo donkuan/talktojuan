@@ -159,8 +159,16 @@ function aboutBlock(id){const x=infoFor(id);if(!x)return null;
     picksFor(id)?el("div",{},el("div",{class:"eyebrow",style:"margin-bottom:4px",text:"Fish, seafood & vegetarian picks"}),
       el("div",{class:"foods"},picksFor(id).map(([n,t,f])=>el("span",{class:"food "+(t==="f"?"fish":"veg")},el("span",{class:"kind",text:t==="f"?"🐟":"🌱","aria-label":t==="f"?"Fish or seafood":"Vegetarian"}),n,f.includes("g")?el("span",{class:"fl",title:"Usually contains gluten (wheat/barley)",text:"G"}):null,f.includes("m")?el("span",{class:"fl",title:"Usually contains cow's milk",text:"M"}):null)))):null,
     el("div",{},el("div",{class:"muted",style:"font-size:12px;margin-top:4px",text:"G = usually has gluten (wheat/barley), M = usually has cow's milk. Recipes vary: ask."})))}
+const CASH_LBL={stock:"Get cash before you arrive",some:"Bring some cash",card:"Cards fine"};
+function cashLine(id){const c=CASH[id];if(!c)return null;
+  return el("div",{class:"cash "+c.k},el("b",{text:"💵 "+CASH_LBL[c.k]}),el("span",{text:c.t}))}
+function moneyCard(){
+  return el("details",{class:"money"},el("summary",{},"Money: which card to use, fees, cash tips"),
+    el("div",{class:"cards"},MONEY.cards.map(([n,fee,use])=>el("div",{class:"mc"},el("b",{text:n}),el("div",{text:fee}),el("div",{class:"muted",text:"Use for: "+use})))),
+    el("ul",{class:"mtips"},MONEY.tips.map(t=>el("li",{text:t}))))}
 function renderStops(){
   const w=$("#stops");w.innerHTML="";
+  w.append(moneyCard());
   for(const s of STOPS){
     const ul=el("ul",{class:"acts"});
     for(const a of s.acts){
@@ -172,7 +180,7 @@ function renderStops(){
     const first=STOPS.find(t=>infoFor(t.id)===infoFor(s.id))===s;const ab=aboutBlock(s.id);
     w.append(el("article",{class:"stop c-"+s.cc},
       el("div",{class:"when"},el("b",{text:`${fmt(s.from)} – ${fmt(s.to)}`}),el("span",{text:`${nights(s)} night${nights(s)>1?"s":""}`}),el("span",{class:"chip c-"+s.cc,text:s.cc,style:"justify-self:start"})),
-      el("div",{style:"min-width:0"},el("h3",{text:s.name}),
+      el("div",{style:"min-width:0"},el("h3",{text:s.name}),cashLine(s.id),
         ab?(first?ab:el("details",{class:"aboutd"},el("summary",{},"History, sights and food (as on the earlier visit)"),ab)):null,
         el("div",{class:"eyebrow",style:"margin:12px 0 0",text:"Ideas · star the ones you want"}),ul)));
   }
@@ -629,6 +637,9 @@ async function buildOffline(progress){
   text(`Offline copy made ${new Date().toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}. Bookings or edits after this time are not in it.`,{sz:9,c:mute});
   hr();text("Route",{f:B,sz:13});y-=2;
   for(const s of STOPS)text(`${fmt(s.from)} - ${fmt(s.to)}   ${s.name} (${s.cc}, ${nights(s)} night${nights(s)===1?"":"s"})`,{sz:10});
+  hr();text("Money and cards",{f:B,sz:13});y-=2;
+  for(const [n,fee,use] of MONEY.cards){text(n,{f:B,sz:9.5});text(fee+" Use for: "+use,{sz:9,c:mute,x:M+10,w:LW-10})}
+  for(const t of MONEY.tips)text("- "+t,{sz:9});
   hr();text("All bookings",{f:B,sz:13});y-=2;
   if(!all.length)text("No bookings yet.",{c:mute});
   for(const b of all){const fr=fileRef(b);
@@ -641,6 +652,7 @@ async function buildOffline(progress){
     const lbl=dayLabel(ds,s);if(lbl!==s.short)text(lbl,{sz:9,c:acc});
     for(const f of festsOn(ds))text(`Local: ${f.t} (${f.w}). ${f.x}`,{sz:9,c:acc});
     text(dayPlan(ds,s),{sz:10});
+    if(ds===s.from&&CASH[s.id])text(`Cash (${CASH_LBL[CASH[s.id].k]}): ${CASH[s.id].t}`,{sz:9,c:CASH[s.id].k==="stock"?acc:mute});
     for(const b of bks){const fr=fileRef(b);text(`${bkLine(b)}${fr?"   -> ticket "+fr:""}`,{f:B,sz:9.5,x:M+10,w:LW-10});
       const d=[bkDetail(b),b.notes||""].filter(Boolean).join("\n");if(d)text(d,{sz:9,c:mute,x:M+22,w:LW-22})}
     if(ds===s.from){const picks=s.acts.filter(a=>S.shared.picks?.[s.id+":"+slug(a[0])]);const list=picks.length?picks:s.acts;
