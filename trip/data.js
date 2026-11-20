@@ -286,7 +286,7 @@ const MONEY={
  cards:[
   ["Trade Republic (debit Visa)","Payments: no fee, Visa rate. Cash: free for withdrawals of €100 or more (local equivalent), €1 below that; no limit on the number. Only the local ATM's own fee applies.","Main card: all cash withdrawals (always take out at least the equivalent of €100) and payments"],
   ["N26 (debit Mastercard)","Payments: no fee, Mastercard rate. Cash: 1.7% per withdrawal in a foreign currency.","Payments, and the backup if a Visa card is refused"],
-  ["Openbank Open Debit (Travel+ off)","Not needed with Trade Republic: don't switch on Travel+ (about €4.99/month). Without Travel+, withdrawals outside the EU cost 4.5%.","Spare card only"],
+  ["Openbank Open Debit (Travel+ off)","Without Travel+: 3% on payments in a foreign currency and 4.5% on withdrawals outside the EU. With Travel+ (€4.99/month, switch on/off any time): payments without an Openbank fee and 2 free withdrawals a month. Not needed with Trade Republic. (Spanish Openbank terms: check the Dutch ones in the app.)","Spare card only"],
   ["ASN debit card","€0.30 per payment and €4.00 per withdrawal, but no exchange-rate markup. Switch on worldwide use in the app.","Big payments (hostel, tour) and large withdrawals"],
   ["ING credit card","Roughly 2% markup on non-euro payments (check the ING app). Never withdraw cash with it.","Backup, car rental and hotel deposits, flights"]
  ],
