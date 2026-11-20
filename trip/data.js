@@ -284,14 +284,16 @@ const CASH={
 /* Which of our cards to use and what they cost outside the eurozone (check the apps: fees change). */
 const MONEY={
  cards:[
-  ["N26 (debit Mastercard)","Payments: no fee, Mastercard rate. Cash: 1.7% per withdrawal in a foreign currency.","Everyday card payments"],
-  ["Openbank Open Debit + Travel+","Travel+ costs about €4.99/month and can be switched off any time. With it: payments in any currency without an Openbank fee, plus a few free ATM withdrawals a month worldwide (Openbank Spain says 2, a Dutch guide says 5: check the app). Without Travel+, withdrawals outside the EU cost 4.5%.","Cash withdrawals (use the free ones first), also fine for payments"],
+  ["Trade Republic (debit Visa)","Payments: no fee, Visa rate. Cash: free for withdrawals of €100 or more (local equivalent), €1 below that; no limit on the number. Only the local ATM's own fee applies.","Main card: all cash withdrawals (always take out at least the equivalent of €100) and payments"],
+  ["N26 (debit Mastercard)","Payments: no fee, Mastercard rate. Cash: 1.7% per withdrawal in a foreign currency.","Payments, and the backup if a Visa card is refused"],
+  ["Openbank Open Debit (Travel+ off)","Not needed with Trade Republic: don't switch on Travel+ (about €4.99/month). Without Travel+, withdrawals outside the EU cost 4.5%.","Spare card only"],
   ["ASN debit card","€0.30 per payment and €4.00 per withdrawal, but no exchange-rate markup. Switch on worldwide use in the app.","Big payments (hostel, tour) and large withdrawals"],
   ["ING credit card","Roughly 2% markup on non-euro payments (check the ING app). Never withdraw cash with it.","Backup, car rental and hotel deposits, flights"]
  ],
  tips:[
   "Always pay and withdraw in the local currency; refuse conversion to euros.",
-  "Local ATMs add their own fee on top (high in Argentina and Chile): withdraw fewer, larger amounts.",
+  "Local ATMs add their own fee on top (high in Argentina and Chile): withdraw fewer, larger amounts (at least €100 worth with Trade Republic).",
+  "Carry one Visa and one Mastercard each: some ATMs and terminals only take one of the two.",
   "Argentina: card payments get the MEP rate. Western Union (send to yourself, collect at a branch) is the cheapest way to get pesos.",
   "Bolivia floated its currency in June 2026: ATMs and exchange offices now give about the same rate.",
   "Each carry two cards in different bags, plus about USD 300–500 in clean notes for emergencies.",
