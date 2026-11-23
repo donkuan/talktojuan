@@ -66,7 +66,7 @@ function renderSync(){
 }
 
 /* ---------- tabs ---------- */
-const TABS=[["calendar","Calendar"],["map","Map"],["stops","Stops & ideas"],["bookings","Bookings"],["packing","Packing"],["ahead","Plan ahead"],["account","Account"]];
+const TABS=[["calendar","Calendar"],["map","Map"],["stops","Stops & ideas"],["w","W trek"],["bookings","Bookings"],["packing","Packing"],["ahead","Plan ahead"],["account","Account"]];
 function renderTabs(){
   const n=$("#tabs");n.innerHTML="";
   const todo=[...S.bookings.values()].filter(b=>b.status!=="booked").length;
@@ -185,13 +185,55 @@ function renderStops(){
       el("summary",{class:"stoph"},
         el("div",{class:"when"},el("b",{text:`${fmt(s.from)} – ${fmt(s.to)}`}),el("span",{text:`${nights(s)} night${nights(s)>1?"s":""}`}),el("span",{class:"chip c-"+s.cc,text:s.cc,style:"justify-self:start"})),
         el("div",{style:"min-width:0"},el("h3",{},s.name,cur?el("span",{class:"now",text:"Now"}):past?el("span",{class:"done",text:"Done"}):null))),
-      el("div",{class:"stopb"},cashLine(s.id),
+      el("div",{class:"stopb"},s.id==="w"?el("button",{class:"btn sm primary",type:"button",style:"margin:6px 0",onclick:()=>{S.tab="w";store.set("tab","w");render();scrollTo({top:0})}},"Open the full W trek plan →"):null,cashLine(s.id),
         ab?(first?ab:el("details",{class:"aboutd"},el("summary",{},"History, sights and food (as on the earlier visit)"),ab)):null,
         el("div",{class:"eyebrow",style:"margin:12px 0 0",text:"Ideas · star the ones you want"}),ul));
     d.open=open;
     d.addEventListener("toggle",()=>{STOP_OPEN[s.id]=d.open;try{localStorage.setItem("trip-stop-open",JSON.stringify(STOP_OPEN))}catch(e){}});
     w.append(el("article",{class:"stop c-"+s.cc+(past?" past":"")},d));
   }
+}
+
+
+/* ---------- W trek ---------- */
+function renderW(){
+  const W=WTREK,v=$("#wtrek");v.innerHTML="";
+  const sec=(t,...k)=>el("section",{class:"wsec"},el("h3",{class:"wh",text:t}),...k);
+  v.append(el("div",{class:"whero c-CL"},
+    el("div",{class:"eyebrow",text:`${wd(W.dates[0])} ${fmt(W.dates[0])} – ${wd(W.dates[1])} ${fmt(W.dates[1])} · Torres del Paine`}),
+    el("h2",{text:"W trek"}),el("p",{class:"muted",text:W.dir}),
+    el("div",{class:"wstats"},...W.stats.map(([a,b])=>el("div",{},el("b",{text:a}),el("span",{text:b}))))));
+  // day jump
+  v.append(el("nav",{class:"wjump"},...W.days.map(d=>el("a",{href:"#wday"+d.n,onclick:e=>{e.preventDefault();document.getElementById("wday"+d.n)?.scrollIntoView({behavior:"smooth",block:"start"})}},el("b",{text:"Day "+d.n}),el("span",{text:d.t})))));
+  // nights
+  v.append(sec("Where you sleep",el("div",{class:"wnights"},...W.nights.map(n=>el("div",{class:"wn"},
+    el("div",{class:"wnd",text:`${wd(n.d)} ${fmt(n.d)}`}),
+    el("div",{},el("b",{text:n.site}),el("span",{class:"muted",text:" · "+n.op}),
+      el("div",{class:"wkv"},el("span",{text:"Booked"}),el("span",{text:n.as}),el("span",{text:"Paid"}),el("span",{text:n.paid}),el("span",{text:"Meals"}),el("span",{class:/unclear/i.test(n.meals)?"warnt":"",text:n.meals})),
+      el("p",{class:"wfacts",text:n.facts})))))));
+  // before
+  v.append(sec("Before you start",el("ul",{class:"wcheck"},...W.before.map(t=>el("li",{text:t})))));
+  // days
+  for(const d of W.days){
+    const tb=el("div",{class:"wlegs"},el("div",{class:"wlh"},...["Start","Section","Dist.","Climb","Duration"].map(t=>el("span",{text:t}))));
+    for(const[t,leg,km,up,dur,note]of d.legs)tb.append(el("div",{class:"wl"},
+      el("span",{class:"wt",text:t}),el("span",{class:"wleg"},el("b",{text:leg}),note?el("small",{text:note}):null),
+      el("span",{class:"wmeta"},el("span",{class:"wnum",text:km}),el("span",{class:"wnum",text:up}),el("span",{class:"wnum",text:dur}))));
+    v.append(el("section",{class:"wday",id:"wday"+d.n},
+      el("div",{class:"wdh"},el("div",{class:"wdn",text:"Day "+d.n}),el("div",{},el("div",{class:"eyebrow",text:`${wd(d.d)} ${fmt(d.d)} · ${d.level}`}),el("h3",{text:d.t}),el("p",{class:"muted",text:d.sub}))),
+      el("div",{class:"wchips"},...[["Distance",d.km+" km"],["Climb",d.up],d.down?["Descent",d.down]:null,["Hiking",d.time],["Pack",d.pack]].filter(Boolean).map(([a,b])=>el("div",{},el("span",{text:a}),el("b",{text:b})))),
+      tb,el("ul",{class:"wtips"},...d.tips.map(t=>el("li",{text:t})))));
+  }
+  // food
+  const F=W.food;
+  v.append(sec("Food",el("p",{text:F.need}),
+    el("div",{class:"wtable"},...F.plan.map(r=>el("div",{class:"wtr"},...r.map((c,i)=>el("span",{class:i?"":"wtk",text:c}))))),
+    el("h4",{text:"Shopping list (gluten-free, no cow milk)"}),el("ul",{},...F.list.map(t=>el("li",{text:t}))),
+    el("h4",{text:"Cost for two, 3 nights"}),
+    el("div",{class:"wtable"},...F.cost.map(r=>el("div",{class:"wtr"},...r.map((c,i)=>el("span",{class:i?"":"wtk",text:c}))))),
+    el("p",{class:"muted small",text:F.note})));
+  v.append(sec("Park rules and safety",el("ul",{},...W.rules.map(t=>el("li",{text:t})))));
+  v.append(el("p",{class:"muted small",text:"Distances and times are standard trail figures (Las Torres, CONAF, trekking guides) and vary by source; '~' marks estimates for sub-sections."}));
 }
 
 /* ---------- bookings ---------- */
@@ -693,7 +735,7 @@ async function downloadOffline(btn){
 
 /* ---------- render ---------- */
 function render(){renderHeader();renderTabs();
-  if(S.tab==="map")renderMap();if(S.tab==="calendar")renderCalendar();if(S.tab==="stops")renderStops();if(S.tab==="bookings")renderBookings();
+  if(S.tab==="map")renderMap();if(S.tab==="calendar")renderCalendar();if(S.tab==="stops")renderStops();if(S.tab==="w")renderW();if(S.tab==="bookings")renderBookings();
   if(S.tab==="packing")renderPacking();if(S.tab==="ahead")renderWarns();if(S.tab==="account")renderAccount();}
 $("#addBk").addEventListener("click",()=>{S.editing={kind:"flight",status:"todo",date:S.sel};renderBookings();$("#bk-title")?.focus()});
 for(const b of document.querySelectorAll("#bkfilter button"))b.addEventListener("click",()=>{S.bkFilter=b.dataset.f;renderBookings()});

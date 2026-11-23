@@ -301,3 +301,80 @@ const MONEY={
  ]
 };
 
+
+/* W trek detail (tab "W trek"). Distances/times: standard trail figures (Las Torres, CONAF, guides); your pace will vary. */
+const WTREK={
+ dates:["2026-11-25","2026-11-28"],dir:"East → west: Central · Cuernos · Paine Grande",
+ stats:[["~62 km","walking"],["+2,100 m","total climb"],["4 days","3 nights"],["870 m","high point (Base Torres)"]],
+ nights:[
+  {d:"2026-11-25",site:"Camping Central",op:"Las Torres",as:"Own tent pitch",paid:"USD 100 (2 × 50)",meals:"No meals (price = pitch only)",facts:"Hot showers, cooking shelter, kiosk with snacks. Welcome Center 1 km away has a café/shop."},
+  {d:"2026-11-26",site:"Camping Los Cuernos",op:"Las Torres",as:"Check voucher",paid:"USD 140",meals:"Unclear: check voucher for tent and meal plan",facts:"Lakeside platforms, hot showers, cooking area, small kiosk. Meals only if pre-booked."},
+  {d:"2026-11-27",site:"Camping Paine Grande",op:"Vertice",as:"Own tent pitch",paid:"USD 26 (2 × 13)",meals:"No meals (price = pitch only)",facts:"Big campsite on Lago Pehoé, very windy: peg and guy the tent well. Minimarket (basic groceries, snacks), bar with pizza/burgers, showers. Catamaran pier."}
+ ],
+ before:[
+  "Park ticket bought online (CONAF, pasesparques) – show at Laguna Amarga",
+  "Bus Natales → Laguna Amarga 25 Nov 06:30; return ticket from Pudeto on 28 Nov",
+  "Rental gear delivered to the Natales hostel on 24 Nov evening: tent, 2 sleeping bags (comfort ~0 °C), 2 mats, stove, pot, 1 gas canister (230 g)",
+  "Check the Cuernos voucher: tent included? meals?",
+  "Food bought in El Calafate (sealed, declared at the Chile border)",
+  "Chilean pesos in cash: shuttle, catamaran, extras",
+  "Passports + Chile entry slip (PDI) – checked at Laguna Amarga and at refugios",
+  "Water filter or tablets, 2 L bottles each, rain jacket + rain trousers, gloves, buff, sunglasses, sunscreen, headlamp"
+ ],
+ days:[
+  {n:1,d:"2026-11-25",t:"Base Torres",sub:"Laguna Amarga → Central, day hike to the towers",km:"19–20",up:"+850–900 m",down:"−850–900 m",time:"8–9 h",pack:"Daypacks (tent pitched at Central)",level:"Hard",
+   legs:[
+    ["06:30","Bus Puerto Natales → Laguna Amarga","","","2 h","Sit on the left for Lago Sarmiento views."],
+    ["08:30","Park entrance Laguna Amarga","","","20–30 min","Register, show park ticket and passport. Toilets + wifi."],
+    ["09:00","Shuttle → Welcome Center","7 km","","15 min","Cash, ~CLP 4,500 or USD 12 pp. Walking adds ~2 h – not worth it today."],
+    ["09:20","Welcome Center → Camping Central","1 km","","15 min","Check in, pitch tent, leave big packs. Fill water."],
+    ["10:00","Central → Refugio Chileno","5.5 km","+400 m","2–2.5 h","Steady climb, then Paso de los Vientos: gusts can knock you off balance. Toilets/kiosk at Chileno."],
+    ["12:30","Chileno → Campamento Torres","~3 km","~+100–150 m","1 h","Gentle, through lenga forest along the river."],
+    ["13:30","Campamento Torres → Mirador Base Torres","~1 km","~+250–300 m","45–60 min","Steep boulder moraine, use hands. Lunch at the lagoon, 30–45 min."],
+    ["14:30","Descent → Central","9.5 km","−850 m","3–3.5 h","Same way. Knees: use poles."],
+    ["18:00","Camping Central","","","","Shower, cook, early night."]
+   ],
+   tips:["Last safe start up from Chileno: ask rangers (they close the moraine section in the afternoon in bad weather).","Clouds often lift around midday; no need for a sunrise start since you camp at Central.","Water: streams after Chileno are fine to drink filtered."]},
+  {n:2,d:"2026-11-26",t:"Along Lago Nordenskjöld",sub:"Central → Los Cuernos",km:"11–12",up:"+300 m",down:"−350 m",time:"4–5 h",pack:"Full packs",level:"Easy–moderate",
+   legs:[
+    ["09:00","Pack up at Central","","","","Dry the tent fly if possible."],
+    ["09:30","Central → junction (stay left, not up to Chileno)","~2 km","~+80 m","40 min","Signposted 'Los Cuernos'."],
+    ["10:10","Junction → Camping Los Cuernos","~9.5 km","~+220 m","3.5–4 h","Rolling path above the turquoise lake, small beaches, a few stream crossings. Exposed to strong side winds."],
+    ["14:00","Camping Los Cuernos","","","","Short day: rest, swim if brave, early dinner. Prepare day-3 lunch and snacks."]
+   ],
+   tips:["Good day to keep legs fresh for day 3.","Fill up water at every stream; there is no shade."]},
+  {n:3,d:"2026-11-27",t:"Valle del Francés",sub:"Los Cuernos → Italiano → Británico → Paine Grande",km:"22–24",up:"+800–1,000 m",down:"−800–1,000 m",time:"9–11 h",pack:"Full packs, daypack from Italiano",level:"Long, hard",
+   legs:[
+    ["06:30","Breakfast, pack up","","","","Start early: this is the long day."],
+    ["07:15","Cuernos → Francés → Campamento Italiano","5.5 km","+150 m","1.5–2.5 h","Ups and downs along the lake, past Francés domes."],
+    ["09:15","Italiano ranger station","","","15 min","Leave big packs at the ranger station (free). Ask the latest time to go up the valley."],
+    ["09:30","Italiano → Mirador Francés","~2 km","+300 m","1 h","Hanging glacier, avalanches crashing down. Turn back here if weather is bad or you're short on time."],
+    ["10:30","Mirador Francés → Mirador Británico","~3.5 km","+300 m","1.5–2 h","Rocky, through forest to the amphitheatre of granite peaks."],
+    ["12:30","Lunch at Británico","","","30 min","Wind and cold: wear all layers."],
+    ["13:00","Británico → Italiano","5.4 km","−600 m","2 h","Steep, loose rock. Collect packs."],
+    ["15:15","Italiano → Paine Grande","7.5 km","+100 m","2.5 h","Mostly flat past Lago Skottsberg, views of Paine Grande and the Cuernos."],
+    ["17:45","Camping Paine Grande","","","","Pitch tent in a sheltered spot, minimarket/bar if you want a treat."]
+   ],
+   tips:["Shorter version: Mirador Francés only → ~17–18 km, +500 m, ~7 h.","If behind schedule at Mirador Francés after 12:00, skip Británico.","Eat every hour; carry 1.5 L each from Italiano."]},
+  {n:4,d:"2026-11-28",t:"Lago Pehoé and home",sub:"Paine Grande → Pudeto → Puerto Natales",km:"0–8",up:"+0–250 m",down:"",time:"0–3 h (optional)",pack:"Day pack for the walk, then full packs",level:"Easy",
+   legs:[
+    ["08:00","Optional out-and-back towards Lago Grey","3–8 km","+100–250 m","1–3 h","Path to Refugio Grey is 11 km one way: walk until the first lake viewpoints, turn back in time."],
+    ["","Catamaran Paine Grande → Pudeto","","","30 min","Check sailing times at Paine Grande reception the evening before. Pay on board."],
+    ["","Bus Pudeto → Puerto Natales","","","~2 h","Your return bus must be valid from Pudeto. Arrive Natales evening: shower, big dinner."]
+   ],
+   tips:["Pack the tent dry if you can; return rental gear the next morning."]}
+ ],
+ food:{
+  plan:[
+   ["Day 1","Lunch on the trail (carry from Natales)","Dinner at Central (cook)"],
+   ["Day 2","Breakfast + lunch + dinner at Cuernos (cook, or half board if booked)",""],
+   ["Day 3","Breakfast, trail lunch at Británico","Dinner at Paine Grande (cook, or bar)"],
+   ["Day 4","Breakfast, snacks","Dinner in Natales"]
+  ],
+  need:"3 breakfasts, 4 lunches, 3 dinners, snacks for 4 days, for 2 people. About 5 kg of food plus a 230 g gas canister.",
+  list:["Breakfast: quinoa flakes or GF oats, coconut/soy milk powder, dried fruit, coffee/tea","Lunch: rice cakes or GF crackers, tuna or salmon pouches, nut butter, hard GF bread","Dinner: rice noodles, instant polenta or instant mash, lentil/bean pouches, olive-oil sachets, stock cubes (GF), spices","Snacks: nuts, dried fruit, dark chocolate, GF bars, salted crisps","Avoid at the Chile border: fresh fruit/veg, meat, cheese, honey, seeds. Keep sealed and declare."],
+  cost:[["Own food (bought in El Calafate)","~USD 120–175 for two","~5 kg + stove/gas"],["Half board at all three","~USD 500","Lunches only"],["Full board at all three","~USD 780","Almost none"]],
+  note:"Refugio meals: Las Torres full board USD 140 pp, half board USD 90 pp; Paine Grande full board ~USD 110 pp. Must be booked ahead (limited capacity). Box lunch is a sandwich: not gluten-free unless requested."
+ },
+ rules:["Stoves only in the designated cooking areas; any fire is banned (huge fines).","Camp only at your booked campsite; rangers check reservations.","Pack out all rubbish, including toilet paper.","Wind: never leave the tent unpegged, even for a minute.","Rangers/first aid at Central, Italiano and Paine Grande. Phone signal is almost nil; some refugios sell wifi."]
+};

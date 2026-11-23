@@ -241,6 +241,46 @@ details.aboutd{border-left:2px solid var(--line);padding-left:12px}
 details.aboutd summary{cursor:pointer;font-weight:500;font-size:14px}
 .acct .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media (prefers-reduced-motion:no-preference){.day,.btn,.star{transition:background .15s,border-color .15s}}
+
+.wtrek{display:grid;gap:16px;max-width:860px}
+.whero{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:16px}
+.whero h2{margin:6px 0 2px;font-size:28px}.whero p{margin:0 0 12px}
+.wstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.wstats div{background:var(--sunk);border-radius:8px;padding:8px 10px;display:grid}.wstats b{font:600 18px var(--mono)}.wstats span{font-size:12px;color:var(--muted)}
+.wjump{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:6px 0}
+.wjump a{display:grid;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+.wjump b{font:600 12px var(--mono)}.wjump span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsec,.wday{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;scroll-margin-top:70px;min-width:0}
+.wh{margin:0 0 10px}.wsec h4{margin:14px 0 6px}.wsec ul,.wday ul{margin:6px 0 0;padding-left:20px;display:grid;gap:4px}
+.wnights{display:grid;gap:12px}.wn{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;border-top:1px solid var(--line);padding-top:10px}.wn:first-child{border-top:0;padding-top:0}
+.wnd{font:500 13px var(--mono);color:var(--muted)}
+.wkv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:6px 0;font-size:14px}.wkv span:nth-child(odd){color:var(--muted);font-size:12px;font-family:var(--mono);text-transform:uppercase;padding-top:2px}
+.warnt{color:var(--warn);font-weight:600}.wfacts{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.wcheck{list-style:none;padding-left:0!important}.wcheck li{padding-left:22px;position:relative}.wcheck li::before{content:"☐";position:absolute;left:0;color:var(--muted)}
+.wdh{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.wdn{font:700 13px var(--mono);background:var(--cl);color:#fff;border-radius:8px;padding:8px 10px;text-align:center;line-height:1.1}
+.wdh h3{margin:2px 0}.wdh p{margin:0}
+.wchips{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin:12px 0}
+.wchips div{background:var(--sunk);border-radius:8px;padding:6px 10px;display:grid}.wchips span{font:500 11px var(--mono);text-transform:uppercase;color:var(--muted)}.wchips b{font-size:14px}
+.wlegs{display:grid;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.wlh,.wl{display:grid;grid-template-columns:52px minmax(0,1fr) 70px 100px 76px;gap:8px;padding:8px 10px;align-items:start}
+.wlh{background:var(--sunk);font:500 11px var(--mono);text-transform:uppercase;color:var(--muted)}
+.wl{border-top:1px solid var(--line);font-size:14px}.wl small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.wmeta{display:contents}.wt,.wnum{font:500 13px var(--mono)}.wt{color:var(--muted)}
+.wtips{font-size:14px}.wtips li::marker{color:var(--cl)}
+.wtable{display:grid;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.wtr{display:grid;grid-template-columns:110px repeat(2,minmax(0,1fr));gap:8px;padding:8px 10px;border-top:1px solid var(--line);font-size:14px}.wtr:first-child{border-top:0}.wtk{font-weight:600}
+.small{font-size:12.5px}
+@media (max-width:640px){
+ .wjump{grid-template-columns:repeat(4,minmax(0,1fr))}.wjump span{display:none}
+ .wn{grid-template-columns:1fr;gap:2px}
+ .wlh{display:none}
+ .wl{grid-template-columns:44px minmax(0,1fr);row-gap:4px}
+ .wl .wmeta{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}
+ .wl .wnum{background:var(--sunk);border-radius:6px;padding:1px 6px;font-size:12px}
+ .wl .wnum:empty{display:none}
+ .wtr{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -293,6 +333,10 @@ details.aboutd summary{cursor:pointer;font-weight:500;font-size:14px}
     <div class="stops" id="stops"></div>
   </section>
 
+  <section id="v-w" class="view" hidden>
+    <div id="wtrek" class="wtrek"></div>
+  </section>
+
   <section id="v-bookings" class="view" hidden>
     <div class="toolbar">
       <div class="seg" id="bkfilter" role="group" aria-label="Filter bookings">
@@ -324,9 +368,9 @@ details.aboutd summary{cursor:pointer;font-weight:500;font-size:14px}
     <div class="acct" id="acct"></div>
   </section>
 </div>
-<script src="data.js?v=16"></script>
-<script src="../firebase-config.js?v=16"></script>
-<script src="backend.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="data.js?v=17"></script>
+<script src="../firebase-config.js?v=17"></script>
+<script src="backend.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
