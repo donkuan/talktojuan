@@ -166,6 +166,7 @@ function moneyCard(){
   return el("details",{class:"money"},el("summary",{},"Money: which card to use, fees, cash tips"),
     el("div",{class:"cards"},MONEY.cards.map(([n,fee,use])=>el("div",{class:"mc"},el("b",{text:n}),el("div",{text:fee}),el("div",{class:"muted",text:"Use for: "+use})))),
     el("ul",{class:"mtips"},MONEY.tips.map(t=>el("li",{text:t}))))}
+let STOP_OPEN={};try{STOP_OPEN=JSON.parse(localStorage.getItem("trip-stop-open")||"{}")||{}}catch(e){}
 function renderStops(){
   const w=$("#stops");w.innerHTML="";
   w.append(moneyCard());
@@ -178,11 +179,18 @@ function renderStops(){
         el("span",{class:"t"},a[0],el("span",{class:"tag",text:a[1]}))));
     }
     const first=STOPS.find(t=>infoFor(t.id)===infoFor(s.id))===s;const ab=aboutBlock(s.id);
-    w.append(el("article",{class:"stop c-"+s.cc},
-      el("div",{class:"when"},el("b",{text:`${fmt(s.from)} – ${fmt(s.to)}`}),el("span",{text:`${nights(s)} night${nights(s)>1?"s":""}`}),el("span",{class:"chip c-"+s.cc,text:s.cc,style:"justify-self:start"})),
-      el("div",{style:"min-width:0"},el("h3",{text:s.name}),cashLine(s.id),
+    const past=s.to<today,cur=s.from<=today&&today<=s.to;
+    const open=s.id in STOP_OPEN?STOP_OPEN[s.id]:!past;
+    const d=el("details",{class:"stopd"},
+      el("summary",{class:"stoph"},
+        el("div",{class:"when"},el("b",{text:`${fmt(s.from)} – ${fmt(s.to)}`}),el("span",{text:`${nights(s)} night${nights(s)>1?"s":""}`}),el("span",{class:"chip c-"+s.cc,text:s.cc,style:"justify-self:start"})),
+        el("div",{style:"min-width:0"},el("h3",{},s.name,cur?el("span",{class:"now",text:"Now"}):past?el("span",{class:"done",text:"Done"}):null))),
+      el("div",{class:"stopb"},cashLine(s.id),
         ab?(first?ab:el("details",{class:"aboutd"},el("summary",{},"History, sights and food (as on the earlier visit)"),ab)):null,
-        el("div",{class:"eyebrow",style:"margin:12px 0 0",text:"Ideas · star the ones you want"}),ul)));
+        el("div",{class:"eyebrow",style:"margin:12px 0 0",text:"Ideas · star the ones you want"}),ul));
+    d.open=open;
+    d.addEventListener("toggle",()=>{STOP_OPEN[s.id]=d.open;try{localStorage.setItem("trip-stop-open",JSON.stringify(STOP_OPEN))}catch(e){}});
+    w.append(el("article",{class:"stop c-"+s.cc+(past?" past":"")},d));
   }
 }
 
