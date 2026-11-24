@@ -281,6 +281,37 @@ details.aboutd summary{cursor:pointer;font-weight:500;font-size:14px}
  .wl .wnum:empty{display:none}
  .wtr{grid-template-columns:1fr}
 }
+
+/* collapsible blocks */
+details.fold>summary.fsum{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}
+details.fold>summary.fsum::-webkit-details-marker{display:none}
+details.fold>summary.fsum::after{content:"▾";margin-left:auto;color:var(--muted);transition:transform .15s;flex:none}
+details.fold:not([open])>summary.fsum::after{transform:rotate(-90deg)}
+details.grp{margin-bottom:12px}
+details.grp>summary.fsum{font:600 13px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 2px}
+details.grp>summary .cnt{background:var(--sunk);border-radius:10px;padding:1px 8px;font-size:12px}
+details.grp>.ledger,details.grp>.warns{margin-top:6px}
+details.bk{display:block;padding:10px 14px}
+details.bk>summary .d{font:500 13px var(--mono);flex:none;width:96px;color:var(--muted)}
+details.bk>summary .title{font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere}
+details.bk>summary .pill{flex:none}
+.bkb{display:grid;gap:6px;margin-top:10px;padding-left:106px}
+.bkb .pill.kind{justify-self:start}
+.bkb .acts2{justify-content:flex-start}
+@media (max-width:640px){details.bk>summary{flex-wrap:wrap;row-gap:2px}details.bk>summary .d{width:auto;order:0}details.bk>summary .pill{order:1;margin-left:auto}details.fold.bk>summary.fsum::after{order:2;margin-left:0}details.bk>summary .title{flex-basis:100%;order:3}.bkb{padding-left:0}}
+details.warn{display:block;padding:12px 14px}
+details.warn>summary .sev{width:6px;align-self:stretch;border-radius:3px;flex:none;min-height:34px}
+details.warn>summary .wtt{display:grid;gap:2px;flex:1;min-width:0}
+details.warn>summary .by.late{color:var(--bad)}
+details.warn>summary .ck{flex:none}
+details.warn.done>summary b{text-decoration:line-through;color:var(--muted)}
+.wbody{margin:8px 0 0 16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pack details.psec{break-inside:avoid;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:block}
+.pack details.psec>summary .pn{font-weight:600}
+.pack details.psec>summary .cnt{font:500 12px var(--mono);color:var(--muted)}
+.pack details.psec.full>summary .cnt{color:var(--ok)}
+.pack details.psec[open]>summary{margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -368,9 +399,9 @@ details.aboutd summary{cursor:pointer;font-weight:500;font-size:14px}
     <div class="acct" id="acct"></div>
   </section>
 </div>
-<script src="data.js?v=19"></script>
-<script src="../firebase-config.js?v=19"></script>
-<script src="backend.js?v=19"></script>
-<script src="app.js?v=19"></script>
+<script src="data.js?v=20"></script>
+<script src="../firebase-config.js?v=20"></script>
+<script src="backend.js?v=20"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>

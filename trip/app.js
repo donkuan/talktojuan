@@ -166,6 +166,18 @@ function moneyCard(){
   return el("details",{class:"money"},el("summary",{},"Money: which card to use, fees, cash tips"),
     el("div",{class:"cards"},MONEY.cards.map(([n,fee,use])=>el("div",{class:"mc"},el("b",{text:n}),el("div",{text:fee}),el("div",{class:"muted",text:"Use for: "+use})))),
     el("ul",{class:"mtips"},MONEY.tips.map(t=>el("li",{text:t}))))}
+let FOLD={};try{FOLD=JSON.parse(localStorage.getItem("trip-fold")||"{}")||{}}catch(e){}
+/* Collapsible block that remembers its state on this phone. force=true/false overrides. */
+function fold(key,dflt,cls,summary,body,force){
+  const save=v=>{FOLD[key]=v;try{localStorage.setItem("trip-fold",JSON.stringify(FOLD))}catch(e){}};
+  const sm=el("summary",{class:"fsum"},...summary);
+  const d=el("details",{class:"fold "+(cls||"")},sm,...body);
+  d.open=force!=null?force:(key in FOLD?FOLD[key]:dflt);
+  // record on click (sync) so a re-render right after the tap keeps the new state
+  sm.addEventListener("click",e=>{if(e.defaultPrevented)return;save(!d.open)});
+  return d;
+}
+const stopTog=e=>e.stopPropagation();
 let STOP_OPEN={};try{STOP_OPEN=JSON.parse(localStorage.getItem("trip-stop-open")||"{}")||{}}catch(e){}
 function renderStops(){
   const w=$("#stops");w.innerHTML="";
@@ -251,7 +263,8 @@ function renderBookings(){
   const rows=all.filter(b=>S.bkFilter==="all"||(S.bkFilter==="booked"?b.status==="booked":b.status!=="booked"));
   if(!S.loaded&&!all.length){L.append(el("div",{class:"empty",text:"Loading bookings…"}));return}
   if(!rows.length){L.append(el("div",{class:"empty",text:all.length?"Nothing in this filter.":"No bookings yet. Use “Add booking”, or import from the old planner under Account."}));return}
-  for(const b of rows){
+  const up=rows.filter(b=>!b.date||b.date>=today),past=rows.filter(b=>b.date&&b.date<today);
+  const item=b=>{
     const st=b.status==="booked";
     const same=all.filter(x=>x.date&&x.date===b.date);const pos=same.findIndex(x=>x.id===b.id);
     const prev=pos>0?same[pos-1]:null,next=pos>=0&&pos<same.length-1?same[pos+1]:null;
@@ -273,12 +286,20 @@ function renderBookings(){
           el("button",{class:"btn sm",type:"button","aria-label":"Delete "+b.title,onclick:()=>{S.confirmDel=b.id;renderBookings()}},"✕")].filter(Boolean));
       }
     }
-    L.append(el("div",{class:"bk "+(st?"booked":"todo")},
-      el("div",{},el("div",{class:"d",text:b.date?`${wd(b.date)} ${fmt(b.date)}`:"No date"}),el("span",{class:"pill kind",text:KINDS[b.kind]||"Other"})),
-      el("div",{style:"min-width:0"},el("div",{class:"title"},b.title," ",el("span",{class:"pill "+(st?"booked":"todo"),text:st?"Booked":"To book"})),
-        sub?el("div",{class:"sub",text:sub}):null,b.notes?el("div",{class:"sub",text:b.notes}):null,fileList(b)),
-      actions));
-  }
+    const nf=Array.isArray(b.files)?b.files.length:0;
+    const busy=S.confirmMerge===b.id||S.confirmDel===b.id||S.uploading.has(b.id);
+    return fold("bk:"+b.id,false,"bk "+(st?"booked":"todo"),
+      [el("span",{class:"d",text:b.date?`${wd(b.date)} ${fmt(b.date)}`:"No date"}),
+       el("span",{class:"title"},b.title,nf?el("span",{class:"clip",title:nf+" ticket"+(nf>1?"s":""),text:" 📎"+(nf>1?nf:"")}):null),
+       el("span",{class:"pill "+(st?"booked":"todo"),text:st?"Booked":"To book"})],
+      [el("div",{class:"bkb"},el("span",{class:"pill kind",text:KINDS[b.kind]||"Other"}),
+        sub?el("div",{class:"sub",text:sub}):null,b.notes?el("div",{class:"sub",text:b.notes}):null,fileList(b),actions)],busy?true:null);
+  };
+  const grp=(key,label,list,dflt)=>list.length?L.append(fold(key,dflt,"grp",[el("span",{text:label}),el("span",{class:"cnt",text:String(list.length)})],[el("div",{class:"ledger"},...list.map(item))])):null;
+  if(S.bkFilter==="all"){
+    const todo=up.filter(b=>b.status!=="booked"),bk=up.filter(b=>b.status==="booked");
+    grp("g:todo","To book",todo,true);grp("g:up","Booked, coming up",bk,true);grp("g:past","Past",past,false);
+  }else{grp("g:"+S.bkFilter+":up","Coming up",up,true);grp("g:"+S.bkFilter+":past","Past",past,false)}
 }
 function bookingForm(b){
   const isNew=!b.id;
@@ -457,8 +478,7 @@ function renderPacking(){
   const signedIn=!!S.user;
   packSections().forEach((sec,si)=>{
     const c=sec.items.filter(i=>m.checked[i.key]).length;tot+=sec.items.length;done+=c;
-    const head=el("h3",{},sec.name,el("span",{text:`${c}/${sec.items.length}`}));
-    const box=el("section",{},head);
+    const box=fold("p:"+sec.key,false,"psec"+(c===sec.items.length&&c?" full":""),[el("span",{class:"pn",text:sec.name}),el("span",{class:"cnt",text:`${c}/${sec.items.length}`})],[],ed?true:null);
     if(ed){box.append(S.confirmSec===sec.key
       ?el("div",{class:"confirm",style:"margin:-2px 0 6px"},`Remove “${sec.name}”${sec.own?" and its items":""}?`,el("button",{class:"btn sm danger",type:"button",onclick:()=>removeSection(sec)},"Remove"),el("button",{class:"btn sm",type:"button",onclick:()=>{S.confirmSec=null;renderPacking()}},"Keep"))
       :el("button",{class:"btn sm",type:"button",style:"margin:-2px 0 6px","aria-label":"Remove section "+sec.name,onclick:()=>{S.confirmSec=sec.key;renderPacking()}},"Remove section"))}
@@ -504,14 +524,19 @@ function restoreItems(){setMine({hidden:{}})}
 /* ---------- plan ahead ---------- */
 function renderWarns(){
   const w=$("#warns");w.innerHTML="";
-  const list=[...WARNS].sort((a,b)=>(!!S.shared.warns?.[a.id]-!!S.shared.warns?.[b.id])||a.by.localeCompare(b.by));
-  for(const x of list){
+  const list=[...WARNS].sort((a,b)=>a.by.localeCompare(b.by));
+  const item=x=>{
     const on=!!S.shared.warns?.[x.id];const late=!on&&today>x.by;const id="w-"+x.id;
-    w.append(el("div",{class:"warn"+(on?" done":"")},
-      el("span",{class:"sev "+x.sev,"aria-label":{high:"High priority",med:"Medium priority",low:"Good to know"}[x.sev]}),
-      el("div",{style:"min-width:0"},el("div",{class:"by",text:(late?"Overdue · ":"")+"Do by "+fmt(x.by,{weekday:"short",day:"numeric",month:"short"})}),el("h3",{text:x.t,style:"margin:3px 0"}),el("div",{class:"muted",text:x.d})),
-      el("label",{class:"ck",for:id},el("input",{type:"checkbox",id,checked:on,disabled:!canWrite(),onchange:e=>toggleWarn(x.id,e.target.checked)}),el("span",{text:"Handled"}))));
-  }
+    return fold("w:"+x.id,false,"warn"+(on?" done":""),
+      [el("span",{class:"sev "+x.sev,"aria-label":{high:"High priority",med:"Medium priority",low:"Good to know"}[x.sev]}),
+       el("span",{class:"wtt"},el("span",{class:"by"+(late?" late":""),text:(late?"Overdue · ":"")+"Do by "+fmt(x.by,{weekday:"short",day:"numeric",month:"short"})}),el("b",{text:x.t})),
+       el("label",{class:"ck",for:id,onclick:stopTog},el("input",{type:"checkbox",id,checked:on,disabled:!canWrite(),onchange:e=>toggleWarn(x.id,e.target.checked)}),el("span",{class:"sr",text:"Handled"}))],
+      [el("div",{class:"muted wbody",text:x.d})]);
+  };
+  const todo=list.filter(x=>!S.shared.warns?.[x.id]),done=list.filter(x=>S.shared.warns?.[x.id]);
+  const grp=(key,label,l,dflt)=>l.length?w.append(fold(key,dflt,"grp",[el("span",{text:label}),el("span",{class:"cnt",text:String(l.length)})],[el("div",{class:"warns"},...l.map(item))])):null;
+  grp("g:wtodo","To do",todo,true);grp("g:wdone","Handled",done,false);
+  if(!todo.length)w.prepend(el("p",{class:"empty",text:"All handled 🎉"}));
 }
 
 /* ---------- shared writes ---------- */
